@@ -45,7 +45,7 @@ const main = async () => {
       password: hasedPassword,
       name: envConfig.ADMIN_NAME,
       phoneNumber: envConfig.ADMIN_PHONENUMBER,
-      rolesId: admimRole.id,
+      roleId: admimRole.id,
     },
   });
 

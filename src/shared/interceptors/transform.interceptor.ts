@@ -21,7 +21,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         const response = ctx.getResponse();
         const statusCode = response.statusCode;
         const message = this.reflector.get<string>(RESPONSE_MESSAGE, context.getHandler()) || '';
-        return { message, data, statusCode };
+        return { message, statusCode, data };
       }),
     );
   }

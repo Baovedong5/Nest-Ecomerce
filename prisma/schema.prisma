@@ -43,8 +43,8 @@ model User {
 
   totpSecret                  String?               @unique @db.VarChar(10000)
   status                      UserStatus            @default(INACTIVE)
-  rolesId                     Int
-  role                        Role                  @relation(fields: [rolesId], references: [id],  onDelete: NoAction, onUpdate: NoAction)
+  roleId                      Int
+  role                        Role                  @relation(fields: [roleId], references: [id],  onDelete: NoAction, onUpdate: NoAction)
   carts                       CartItem[]
   orders                      Order[]
   reviews                     Review[]
