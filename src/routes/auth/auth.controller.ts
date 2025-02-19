@@ -1,6 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator';
+import { RegisterBodyDTO, RegisterResDTO } from './auth.dto';
+import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('auth')
 export class AuthController {
@@ -8,7 +10,8 @@ export class AuthController {
 
   @Post('register')
   @ResponseMessage('Đăng ký thành công')
-  async register(@Body() body: any) {
+  @ZodSerializerDto(RegisterResDTO)
+  async register(@Body() body: RegisterBodyDTO) {
     return await this.authService.register(body);
   }
 
