@@ -19,6 +19,10 @@ const configSchema = zod.object({
   REFRESH_TOKEN_SECRET: zod.string(),
   REFRESH_TOKEN_EXPIRES_IN: zod.string(),
   SECRET_API_KEY: zod.string(),
+  ADMIN_NAME: zod.string(),
+  ADMIN_EMAIL: zod.string(),
+  ADMIN_PASSWORD: zod.string(),
+  ADMIN_PHONENUMBER: zod.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);
