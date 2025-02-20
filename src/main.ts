@@ -8,7 +8,7 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
 
   //declare interceptor global
-  app.useGlobalInterceptors(new TransformInterceptor(reflector));
+  // app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
   await app.listen(process.env.PORT ?? 8080);
 }

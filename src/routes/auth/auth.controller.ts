@@ -9,7 +9,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ResponseMessage('Đăng ký thành công')
+  // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(RegisterResDTO)
   async register(@Body() body: RegisterBodyDTO) {
     return await this.authService.register(body);
