@@ -20,3 +20,10 @@ export const UserStatus = {
   INACTIVE: 'INACTIVE',
   BLOCKED: 'BLOCKED',
 } as const;
+
+export const TypeOfVerifycationCode = {
+  REGISTER: 'REGISTER',
+  FORGOT_PASSWORD: 'FORGOT_PASSWORD',
+} as const;
+
+export type TypeOfVerifycationCodeType = (typeof TypeOfVerifycationCode)[keyof typeof TypeOfVerifycationCode];
