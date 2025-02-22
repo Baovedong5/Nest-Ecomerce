@@ -24,6 +24,7 @@ const configSchema = zod.object({
   ADMIN_PASSWORD: zod.string(),
   ADMIN_PHONENUMBER: zod.string(),
   OTP_EXPIRES_IN: zod.string(),
+  RESEND_API_KEY: zod.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);

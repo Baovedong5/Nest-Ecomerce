@@ -10,15 +10,16 @@ import { addMilliseconds } from 'date-fns';
 import envConfig from 'src/shared/config';
 import ms from 'ms';
 import { TypeOfVerifycationCode } from 'src/shared/constants/auth.constant';
+import { EmailService } from 'src/shared/services/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hasingService: HasingService,
-    private readonly tokenService: TokenService,
     private readonly rolesService: RolesService,
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(body: RegisterBodyType) {
@@ -99,6 +100,19 @@ export class AuthService {
     });
 
     //3. gửi mã OTP
+    const { error } = await this.emailService.sendOTP({
+      email: body.email,
+      code,
+    });
+
+    if (error) {
+      throw new UnprocessableEntityException([
+        {
+          message: 'Gửi mã OTP thất bại',
+          path: 'code',
+        },
+      ]);
+    }
 
     return verificationCode;
   }
