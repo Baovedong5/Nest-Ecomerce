@@ -3,7 +3,7 @@ import { HasingService } from 'src/shared/services/hasing.service';
 import { TokenService } from 'src/shared/services/token.service';
 import { RolesService } from './roles.service';
 import { generateOTP, isUniqueConstraintPrismaError } from 'src/shared/helper';
-import { RegisterBodyType, SendOTPBodyType } from './auth.model';
+import { LoginBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo';
 import { addMilliseconds } from 'date-fns';
@@ -11,6 +11,7 @@ import envConfig from 'src/shared/config';
 import ms from 'ms';
 import { TypeOfVerifycationCode } from 'src/shared/constants/auth.constant';
 import { EmailService } from 'src/shared/services/email.service';
+import { AccessTokenPayloadCreate } from 'src/shared/types/jwt.type';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async register(body: RegisterBodyType) {
@@ -117,9 +119,107 @@ export class AuthService {
     return verificationCode;
   }
 
-  login(body: any) {}
+  async login(body: LoginBodyType & { userAgent: string; ip: string }) {
+    //check email exisit database ?
+    const user = await this.authRepository.findUniqueUserIncludeRole({
+      email: body.email,
+    });
 
-  refreshToken(refreshToken: string) {}
+    if (!user) {
+      throw new UnprocessableEntityException([
+        {
+          message: 'Email không tồn tại',
+          path: 'email',
+        },
+      ]);
+    }
+
+    //check password
+    const isPasswordMatch = await this.hasingService.compare(body.password, user.password);
+    if (!isPasswordMatch) {
+      throw new UnprocessableEntityException([
+        {
+          field: 'password',
+          error: 'Mật khẩu không đúng',
+        },
+      ]);
+    }
+
+    //Tạo device mới
+    const device = await this.authRepository.createDevice({
+      userId: user.id,
+      userAgent: body.userAgent,
+      ip: body.ip,
+    });
+
+    //create access token and refresh token
+    const tokens = await this.generateTokens({
+      userId: user.id,
+      deviceId: device.id,
+      roleId: user.roleId,
+      roleName: user.role.name,
+    });
+
+    return tokens;
+  }
+
+  async generateTokens({ userId, deviceId, roleId, roleName }: AccessTokenPayloadCreate) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenService.signAccessToken({
+        userId,
+        deviceId,
+        roleId,
+        roleName,
+      }),
+      this.tokenService.signRefreshToken({
+        userId,
+      }),
+    ]);
+
+    const decodedRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken);
+
+    await this.authRepository.createRefreshToken({
+      token: refreshToken,
+      userId,
+      expiresAt: new Date(decodedRefreshToken.exp * 1000),
+      deviceId,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  // async refreshToken(refreshToken: string) {
+  //   try {
+  //     //1. Kiểm tra token có hợp lệ hay không
+  //     const { userId } = await this.tokenService.verifyRefreshToken(refreshToken);
+
+  //     //2. Kiểm tra refresh token có tồn tại trong database không
+  //     await this.prismaService.refreshToken.findUniqueOrThrow({
+  //       where: {
+  //         token: refreshToken,
+  //       },
+  //     });
+
+  //     //3. Xóa refresh token cũ
+  //     await this.prismaService.refreshToken.delete({
+  //       where: {
+  //         token: refreshToken,
+  //       },
+  //     });
+
+  //     //4. Tao token mới
+  //     return await this.generateTokens({ userId });
+  //   } catch (error) {
+  //     // Trường hợp đã refresh token hãy thông báo cho user biết
+  //     // refresh token của họ đã bị đánh cắp
+  //     if (isNotFoundPrismaError(error)) throw new UnauthorizedException('Invalid token');
+
+  //     throw new UnauthorizedException('Invalid token');
+  //   }
+  // }
 
   logout(refreshToken: string) {}
 }
