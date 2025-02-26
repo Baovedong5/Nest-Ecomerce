@@ -14,12 +14,14 @@ import {
 import { ZodSerializerDto } from 'nestjs-zod';
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
+import { IsPublic } from 'src/shared/decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @IsPublic()
   // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(RegisterResDTO)
   register(@Body() body: RegisterBodyDTO) {
@@ -27,12 +29,15 @@ export class AuthController {
   }
 
   @Post('otp')
+  @IsPublic()
   // @ResponseMessage('Đăng ký thành công')
+  @ZodSerializerDto(MessageResDTO)
   sendOTP(@Body() body: SendOTPBodyDTO) {
     return this.authService.sendOTP(body);
   }
 
   @Post('login')
+  @IsPublic()
   @ZodSerializerDto(LoginResDTO)
   // @ResponseMessage('Đăng nhập thành công')
   login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
@@ -44,6 +49,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @IsPublic()
   // @ResponseMessage('Lấy token mới thành công')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(RefreshTokenResDTO)
