@@ -1,7 +1,14 @@
-import { Body, Controller, Post, Ip } from '@nestjs/common';
+import { Body, Controller, Post, Ip, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator';
-import { LoginBodyDTO, RegisterBodyDTO, RegisterResDTO, SendOTPBodyDTO } from './auth.dto';
+import {
+  LoginBodyDTO,
+  LoginResDTO,
+  RefreshTokenBodyDTO,
+  RegisterBodyDTO,
+  RegisterResDTO,
+  SendOTPBodyDTO,
+} from './auth.dto';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator';
 
@@ -12,8 +19,8 @@ export class AuthController {
   @Post('register')
   // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(RegisterResDTO)
-  async register(@Body() body: RegisterBodyDTO) {
-    return await this.authService.register(body);
+  register(@Body() body: RegisterBodyDTO) {
+    return this.authService.register(body);
   }
 
   @Post('otp')
@@ -23,6 +30,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @ZodSerializerDto(LoginResDTO)
   // @ResponseMessage('Đăng nhập thành công')
   login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.login({
@@ -32,12 +40,16 @@ export class AuthController {
     });
   }
 
-  // @Post('refresh-token')
-  // @ResponseMessage('Lấy token mới thành công')
-  // @HttpCode(HttpStatus.OK)
-  // async refreshToken(@Body() body: any) {
-  //   return await this.authService.refreshToken(body.refreshToken);
-  // }
+  @Post('refresh-token')
+  @ResponseMessage('Lấy token mới thành công')
+  @HttpCode(HttpStatus.OK)
+  refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
+    return this.authService.refreshToken({
+      refreshToken: body.refreshToken,
+      userAgent,
+      ip,
+    });
+  }
 
   // @Post('logout')
   // @ResponseMessage('Đăng xuất thành công')
