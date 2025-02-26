@@ -4,13 +4,16 @@ import { ResponseMessage } from 'src/shared/decorators/response-message.decorato
 import {
   LoginBodyDTO,
   LoginResDTO,
+  LogoutBodyDTO,
   RefreshTokenBodyDTO,
+  RefreshTokenResDTO,
   RegisterBodyDTO,
   RegisterResDTO,
   SendOTPBodyDTO,
 } from './auth.dto';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator';
+import { MessageResDTO } from 'src/shared/dtos/response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -41,8 +44,9 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  @ResponseMessage('Lấy token mới thành công')
+  // @ResponseMessage('Lấy token mới thành công')
   @HttpCode(HttpStatus.OK)
+  @ZodSerializerDto(RefreshTokenResDTO)
   refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.refreshToken({
       refreshToken: body.refreshToken,
@@ -51,9 +55,10 @@ export class AuthController {
     });
   }
 
-  // @Post('logout')
+  @Post('logout')
   // @ResponseMessage('Đăng xuất thành công')
-  // async logout(@Body() body: any) {
-  //   return await this.authService.logout(body.refreshToken);
-  // }
+  @ZodSerializerDto(MessageResDTO)
+  logout(@Body() body: LogoutBodyDTO) {
+    return this.authService.logout(body.refreshToken);
+  }
 }

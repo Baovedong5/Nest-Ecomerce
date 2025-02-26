@@ -2,7 +2,7 @@ import { HttpException, Injectable, UnauthorizedException, UnprocessableEntityEx
 import { HasingService } from 'src/shared/services/hasing.service';
 import { TokenService } from 'src/shared/services/token.service';
 import { RolesService } from './roles.service';
-import { generateOTP, isUniqueConstraintPrismaError } from 'src/shared/helper';
+import { generateOTP, isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helper';
 import { LoginBodyType, RefreshTokenBodyType, RegisterBodyType, SendOTPBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo';
@@ -238,5 +238,30 @@ export class AuthService {
     }
   }
 
-  logout(refreshToken: string) {}
+  async logout(refreshToken: string) {
+    try {
+      //1. Kiểm tra token có hợp lệ hay không
+      await this.tokenService.verifyRefreshToken(refreshToken);
+
+      //2. Xóa refresh token
+      const deletedRefreshToken = await this.authRepository.deleteRefreshToken({
+        token: refreshToken,
+      });
+
+      //3. Cập nhật device đã logout
+      await this.authRepository.updateDevice(deletedRefreshToken.deviceId, {
+        isActive: false,
+      });
+
+      return {
+        message: 'Đăng xuất thành công',
+      };
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw new UnauthorizedException('Refresh Token đã được sử dụng');
+      }
+
+      throw new UnauthorizedException('Refresh Token không hợp lệ');
+    }
+  }
 }
