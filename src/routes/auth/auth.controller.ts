@@ -1,7 +1,8 @@
-import { Body, Controller, Post, Ip, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Ip, HttpCode, HttpStatus, Get, Query, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator';
 import {
+  GetAuthorizationUrlResDTO,
   LoginBodyDTO,
   LoginResDTO,
   LogoutBodyDTO,
@@ -15,29 +16,35 @@ import { ZodSerializerDto } from 'nestjs-zod';
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
 import { IsPublic } from 'src/shared/decorators/auth.decorator';
+import { GoogleService } from './google.service';
+import { Response } from 'express';
+import envConfig from 'src/shared/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
+  ) {}
 
-  @Post('register')
   @IsPublic()
+  @Post('register')
   // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(RegisterResDTO)
   register(@Body() body: RegisterBodyDTO) {
     return this.authService.register(body);
   }
 
-  @Post('otp')
   @IsPublic()
+  @Post('otp')
   // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(MessageResDTO)
   sendOTP(@Body() body: SendOTPBodyDTO) {
     return this.authService.sendOTP(body);
   }
 
-  @Post('login')
   @IsPublic()
+  @Post('login')
   @ZodSerializerDto(LoginResDTO)
   // @ResponseMessage('Đăng nhập thành công')
   login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
@@ -48,8 +55,8 @@ export class AuthController {
     });
   }
 
-  @Post('refresh-token')
   @IsPublic()
+  @Post('refresh-token')
   // @ResponseMessage('Lấy token mới thành công')
   @HttpCode(HttpStatus.OK)
   @ZodSerializerDto(RefreshTokenResDTO)
@@ -62,9 +69,39 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   // @ResponseMessage('Đăng xuất thành công')
   @ZodSerializerDto(MessageResDTO)
   logout(@Body() body: LogoutBodyDTO) {
     return this.authService.logout(body.refreshToken);
+  }
+
+  @Get('google-link')
+  @IsPublic()
+  @ZodSerializerDto(GetAuthorizationUrlResDTO)
+  getGoogleAuthorizationUrl(@UserAgent() userAgent: string, @Ip() ip: string) {
+    return this.googleService.getGoogleAuthorizationUrl({
+      userAgent,
+      ip,
+    });
+  }
+
+  @Get('google/callback')
+  @IsPublic()
+  async googleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    try {
+      const data = await this.googleService.googleCallback({
+        code,
+        state,
+      });
+
+      return res.redirect(
+        `${envConfig.GOOGLE_CLIENT_REDIRECT_URL}?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}`,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Đã xảy ra lỗi khi đăng nhập bằng google, vui lòng thử lại';
+      return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URL}?errorMessage=${message}`);
+    }
   }
 }

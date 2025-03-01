@@ -10,6 +10,9 @@ async function bootstrap() {
   //declare interceptor global
   // app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
+  //declare cors
+  app.enableCors();
+
   await app.listen(process.env.PORT ?? 8080);
 }
 bootstrap();

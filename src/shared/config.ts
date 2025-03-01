@@ -25,6 +25,10 @@ const configSchema = zod.object({
   ADMIN_PHONENUMBER: zod.string(),
   OTP_EXPIRES_IN: zod.string(),
   RESEND_API_KEY: zod.string(),
+  GOOGLE_CLIENT_ID: zod.string(),
+  GOOGLE_CLIENT_SECRET: zod.string(),
+  GOOGLE_REDIRECT_URL: zod.string(),
+  GOOGLE_CLIENT_REDIRECT_URL: zod.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);
