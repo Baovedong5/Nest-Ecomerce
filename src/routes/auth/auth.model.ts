@@ -101,6 +101,24 @@ export const GetAuthorizationUrlResSchema = z.object({
   url: z.string().url(),
 });
 
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.string().email(),
+    code: z.string().length(6),
+    newPassword: z.string().min(6).max(100),
+    confirmNewPassword: z.string().min(6).max(100),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmNewPassword }, ctx) => {
+    if (confirmNewPassword !== newPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Mật khẩu và mật khẩu xác nhận phải giống nhau',
+        path: ['confirmNewPassword'],
+      });
+    }
+  });
+
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>;
 export type RegisterResType = z.infer<typeof RegisterResSchema>;
 export type VerificationCodeType = z.infer<typeof VerificationCode>;
@@ -114,3 +132,4 @@ export type DeviceType = z.infer<typeof DeviceSchema>;
 export type RoleType = z.infer<typeof RoleSchema>;
 export type LogoutBodyType = RefreshTokenBodyType;
 export type GoogleAuthStateType = z.infer<typeof GoogleAuthStateSchema>;
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>;

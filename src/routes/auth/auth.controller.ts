@@ -2,6 +2,7 @@ import { Body, Controller, Post, Ip, HttpCode, HttpStatus, Get, Query, Res } fro
 import { AuthService } from './auth.service';
 import { ResponseMessage } from 'src/shared/decorators/response-message.decorator';
 import {
+  ForgotPasswordBodyDTO,
   GetAuthorizationUrlResDTO,
   LoginBodyDTO,
   LoginResDTO,
@@ -40,6 +41,8 @@ export class AuthController {
   // @ResponseMessage('Đăng ký thành công')
   @ZodSerializerDto(MessageResDTO)
   sendOTP(@Body() body: SendOTPBodyDTO) {
+    console.log('body', body);
+
     return this.authService.sendOTP(body);
   }
 
@@ -103,5 +106,12 @@ export class AuthController {
         error instanceof Error ? error.message : 'Đã xảy ra lỗi khi đăng nhập bằng google, vui lòng thử lại';
       return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URL}?errorMessage=${message}`);
     }
+  }
+
+  @Post('forgot-password')
+  @IsPublic()
+  @ZodSerializerDto(MessageResDTO)
+  forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
+    return this.authService.forgotPassword(body);
   }
 }

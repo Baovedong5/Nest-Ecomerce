@@ -7,8 +7,8 @@ import { AuthRepository } from './auth.repo';
 import { HasingService } from 'src/shared/services/hasing.service';
 import { RolesService } from './roles.service';
 import { v4 as uuidv4 } from 'uuid';
-import { TokenService } from 'src/shared/services/token.service';
 import { AuthService } from './auth.service';
+import { GoogleUserInfoError } from './error.model';
 
 @Injectable()
 export class GoogleService {
@@ -74,7 +74,7 @@ export class GoogleService {
       const { data } = await oauth2.userinfo.get();
 
       if (!data.email) {
-        throw new Error('Không thể lấy thông tin người dùng từ google');
+        throw GoogleUserInfoError;
       }
 
       //4. kiểm tra email người dùng
