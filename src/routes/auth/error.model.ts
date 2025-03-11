@@ -51,3 +51,36 @@ export const UnauthorizedAccessException = new UnauthorizedException('Error.Unau
 
 // Google auth related errors
 export const GoogleUserInfoError = new Error('Error.FailedToGetGoogleUserInfo');
+
+// TOTP errors
+export const TOTPAlreadyEnableException = new UnprocessableEntityException([
+  {
+    message: 'Error.TOTPAlreadyEnable',
+    path: 'totpCode',
+  },
+]);
+
+export const TOTPNotEnableException = new UnprocessableEntityException([
+  {
+    message: 'Error.TOTPNotEnable',
+    path: 'totpCode',
+  },
+]);
+
+export const InvalidTOTPAndCodeException = new UnprocessableEntityException([
+  {
+    message: 'Error.InvalidTOTPAndCode',
+    path: 'totpCode',
+  },
+  {
+    message: 'Error.InvalidTOTPAndCode',
+    path: 'code',
+  },
+]);
+
+export const InvalidTOTPException = new UnprocessableEntityException([
+  {
+    message: 'Error.InvalidTOTP',
+    path: 'totpCode',
+  }
+])

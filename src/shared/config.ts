@@ -29,6 +29,7 @@ const configSchema = zod.object({
   GOOGLE_CLIENT_SECRET: zod.string(),
   GOOGLE_REDIRECT_URL: zod.string(),
   GOOGLE_CLIENT_REDIRECT_URL: zod.string(),
+  APP_NAME: zod.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);

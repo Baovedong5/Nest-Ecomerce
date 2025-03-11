@@ -4,6 +4,7 @@ import { TokenService } from 'src/shared/services/token.service';
 import { RolesService } from './roles.service';
 import { generateOTP, isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helper';
 import {
+  DisableTwoFactorBodyType,
   ForgotPasswordBodyType,
   LoginBodyType,
   RefreshTokenBodyType,
@@ -24,10 +25,15 @@ import {
   FailedToSendOTPException,
   InvalidOTPException,
   InvalidPasswordException,
+  InvalidTOTPAndCodeException,
+  InvalidTOTPException,
   OTPExpiredException,
   RefreshTokenAlreadyUsedException,
+  TOTPAlreadyEnableException,
+  TOTPNotEnableException,
   UnauthorizedAccessException,
 } from './error.model';
+import { TwoFactorService } from 'src/shared/services/2fa.service';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +44,7 @@ export class AuthService {
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
   async validateVerificationCode({
@@ -50,9 +57,11 @@ export class AuthService {
     type: TypeOfVerifycationCodeType;
   }) {
     const verificationCode = await this.authRepository.findUniqueVerificationCode({
-      email,
-      code,
-      type,
+      email_code_type: {
+        email,
+        code,
+        type,
+      },
     });
 
     if (!verificationCode) {
@@ -90,9 +99,11 @@ export class AuthService {
           roleId: clientRoleId,
         }),
         this.authRepository.deleteVerificationCode({
-          email: body.email,
-          code: body.code,
-          type: TypeOfVerifycationCode.REGISTER,
+          email_code_type: {
+            email: body.email,
+            code: body.code,
+            type: TypeOfVerifycationCode.REGISTER,
+          },
         }),
       ]);
 
@@ -145,7 +156,7 @@ export class AuthService {
   }
 
   async login(body: LoginBodyType & { userAgent: string; ip: string }) {
-    //check email exisit database ?
+    //1. Lấy thông tin user, kiểm tra user có tồn tại hay không, mật khẩu đúng không
     const user = await this.authRepository.findUniqueUserIncludeRole({
       email: body.email,
     });
@@ -154,20 +165,47 @@ export class AuthService {
       throw EmailNotFoundException;
     }
 
-    //check password
     const isPasswordMatch = await this.hasingService.compare(body.password, user.password);
     if (!isPasswordMatch) {
       throw InvalidPasswordException;
     }
 
-    //Tạo device mới
+    //2. Nếu user đã bật mã 2FA thì kiểm tra mã 2FA TOTP Code goặc OTP Code (email)
+    if (user.totpSecret) {
+      //2.1 Nếu không có mã TOTP Code và Code thì thông báo cho client biết
+      if (!body.totpCode && !body.code) {
+        throw InvalidTOTPAndCodeException;
+      }
+
+      //2.2 Kiểm tra TOTP Code có hợp lệ không
+      if (body.totpCode) {
+        const isValid = this.twoFactorService.verifyTOTP({
+          email: user.email,
+          secret: user.totpSecret,
+          token: body.totpCode,
+        });
+
+        if (!isValid) {
+          throw InvalidTOTPException;
+        }
+      } else if (body.code) {
+        //2.3 Kiểm tra mã OTP hợp lệ hay không
+        await this.validateVerificationCode({
+          email: user.email,
+          code: body.code,
+          type: TypeOfVerifycationCode.LOGIN,
+        });
+      }
+    }
+
+    //3. Tạo device mới
     const device = await this.authRepository.createDevice({
       userId: user.id,
       userAgent: body.userAgent,
       ip: body.ip,
     });
 
-    //create access token and refresh token
+    // 4. create access token and refresh token
     const tokens = await this.generateTokens({
       userId: user.id,
       deviceId: device.id,
@@ -302,11 +340,81 @@ export class AuthService {
     const hashedPassword = await this.hasingService.hash(newPassword);
     await Promise.all([
       this.authRepository.updateUser({ id: user.id }, { password: hashedPassword }),
-      this.authRepository.deleteVerificationCode({ email, code, type: TypeOfVerifycationCode.FORGOT_PASSWORD }),
+      this.authRepository.deleteVerificationCode({
+        email_code_type: { email, code, type: TypeOfVerifycationCode.FORGOT_PASSWORD },
+      }),
     ]);
 
     return {
       message: 'Đổi mật khẩu thành công',
+    };
+  }
+
+  async setupTwoFactorAuth(userId: number) {
+    //1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và xem họ đã baatk 2FA chưa
+    const user = await this.sharedUserRepository.findUnique({
+      id: userId,
+    });
+
+    if (!user) {
+      throw EmailNotFoundException;
+    }
+
+    if (user.totpSecret) {
+      throw TOTPAlreadyEnableException;
+    }
+    //2. Tạo secret và uri
+    const { secret, uri } = this.twoFactorService.generateTOTPSecret(user.email);
+    //3. Cập nhật secret vào user trong database
+    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret });
+    //4. Trả về secret và uri
+    return {
+      secret,
+      uri,
+    };
+  }
+
+  async disableTwoFactorAuth(data: DisableTwoFactorBodyType & { userId: number }) {
+    const { userId, totpCode, code } = data;
+
+    //1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và đã bật 2FA chưa
+    const user = await this.sharedUserRepository.findUnique({
+      id: userId,
+    });
+
+    if (!user) {
+      throw EmailNotFoundException;
+    }
+
+    if (!user.totpSecret) {
+      throw TOTPNotEnableException;
+    }
+
+    //2. Kiểm tra mã TOTP hợp lệ hay không
+    if (totpCode) {
+      const isValid = this.twoFactorService.verifyTOTP({
+        email: user.email,
+        secret: user.totpSecret,
+        token: totpCode,
+      });
+
+      if (!isValid) {
+        throw InvalidTOTPException;
+      }
+    } else if (code) {
+      // 3. Kiểm tra mã OTP có hợp lệ hay không
+      await this.validateVerificationCode({
+        email: user.email,
+        code,
+        type: TypeOfVerifycationCode.DISABLE_2FA,
+      });
+    }
+
+    //4. Cập nhật secret thành null
+    await this.authRepository.updateUser({ id: userId }, { totpSecret: null });
+
+    return {
+      message: 'Tắt 2FA thành công',
     };
   }
 }
