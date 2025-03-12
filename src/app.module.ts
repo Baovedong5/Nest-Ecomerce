@@ -5,12 +5,12 @@ import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './routes/auth/auth.module';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe';
-
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { ZodSerializerInterceptor } from 'nestjs-zod';
+import { LanguagesModule } from './routes/languages/language.module';
 
 @Module({
-  imports: [SharedModule, AuthModule],
+  imports: [SharedModule, AuthModule, LanguagesModule],
   controllers: [AppController],
   providers: [
     AppService,
