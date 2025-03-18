@@ -1,4 +1,5 @@
 import { TypeOfVerifycationCode } from 'src/shared/constants/auth.constant';
+import { RoleSchema } from 'src/shared/models/shared-role.model';
 import { UserSchema } from 'src/shared/models/shared-user.model';
 import { z } from 'zod';
 
@@ -102,18 +103,6 @@ export const RefreshTokenSchema = z.object({
   deviceId: z.number(),
   expiresAt: z.date(),
   createdAt: z.date(),
-});
-
-export const RoleSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  description: z.string(),
-  isActive: z.boolean(),
-  createdById: z.number().nullable(),
-  updatedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
 });
 
 export const LogoutBodySchema = RefreshTokenBodySchema;
