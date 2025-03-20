@@ -28,6 +28,7 @@ export const CreatePermissionBodySchema = PermissionSchema.pick({
   name: true,
   method: true,
   path: true,
+  module: true,
 }).strict();
 
 export const UpdatePermissionBodySchema = CreatePermissionBodySchema;
