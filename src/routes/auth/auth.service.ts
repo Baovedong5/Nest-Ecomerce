@@ -24,7 +24,6 @@ import {
   EmailNotFoundException,
   FailedToSendOTPException,
   InvalidOTPException,
-  InvalidPasswordException,
   InvalidTOTPAndCodeException,
   InvalidTOTPException,
   OTPExpiredException,
@@ -34,6 +33,7 @@ import {
   UnauthorizedAccessException,
 } from './auth.error';
 import { TwoFactorService } from 'src/shared/services/2fa.service';
+import { InvalidPasswordException } from 'src/shared/error';
 
 @Injectable()
 export class AuthService {
@@ -121,6 +121,7 @@ export class AuthService {
     //1. kiểm tra xem email đã tồn tại trong db chưa
     const user = await this.sharedUserRepository.findUnique({
       email: body.email,
+      deletedAt: null,
     });
 
     if (body.type === TypeOfVerifycationCode.REGISTER && user) {
@@ -159,6 +160,7 @@ export class AuthService {
     //1. Lấy thông tin user, kiểm tra user có tồn tại hay không, mật khẩu đúng không
     const user = await this.authRepository.findUniqueUserIncludeRole({
       email: body.email,
+      deletedAt: null,
     });
 
     if (!user) {
@@ -324,7 +326,7 @@ export class AuthService {
   async forgotPassword(body: ForgotPasswordBodyType) {
     const { email, code, newPassword } = body;
     //1. Kiểm tra xem email đã tồn tại trong database chưa
-    const user = await this.sharedUserRepository.findUnique({ email });
+    const user = await this.sharedUserRepository.findUnique({ email, deletedAt: null });
 
     if (!user) {
       throw EmailNotFoundException;
@@ -339,7 +341,10 @@ export class AuthService {
     //3. Cập nhật lại mật khẩu mới và xóa đi mã otp
     const hashedPassword = await this.hasingService.hash(newPassword);
     await Promise.all([
-      this.authRepository.updateUser({ id: user.id }, { password: hashedPassword }),
+      this.sharedUserRepository.update(
+        { id: user.id, deletedAt: null },
+        { password: hashedPassword, updatedById: user.id },
+      ),
       this.authRepository.deleteVerificationCode({
         email_code_type: { email, code, type: TypeOfVerifycationCode.FORGOT_PASSWORD },
       }),
@@ -366,7 +371,10 @@ export class AuthService {
     //2. Tạo secret và uri
     const { secret, uri } = this.twoFactorService.generateTOTPSecret(user.email);
     //3. Cập nhật secret vào user trong database
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret });
+    await this.sharedUserRepository.update(
+      { id: userId, deletedAt: null },
+      { totpSecret: secret, updatedById: userId },
+    );
     //4. Trả về secret và uri
     return {
       secret,
@@ -380,6 +388,7 @@ export class AuthService {
     //1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và đã bật 2FA chưa
     const user = await this.sharedUserRepository.findUnique({
       id: userId,
+      deletedAt: null,
     });
 
     if (!user) {
@@ -411,7 +420,7 @@ export class AuthService {
     }
 
     //4. Cập nhật secret thành null
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: null });
+    await this.sharedUserRepository.update({ id: userId, deletedAt: null }, { totpSecret: null, updatedById: userId });
 
     return {
       message: 'Tắt 2FA thành công',

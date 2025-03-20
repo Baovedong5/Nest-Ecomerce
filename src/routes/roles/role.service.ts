@@ -72,10 +72,6 @@ export class RoleService {
         throw NotFoundRecordException;
       }
 
-      if (error instanceof Error) {
-        throw new BadRequestException(error.message);
-      }
-
       throw error;
     }
   }
