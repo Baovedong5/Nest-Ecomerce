@@ -5,10 +5,10 @@ import envConfig from 'src/shared/config';
 import { OAuth2Client } from 'google-auth-library';
 import { AuthRepository } from './auth.repo';
 import { HasingService } from 'src/shared/services/hasing.service';
-import { RolesService } from './roles.service';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
 import { GoogleUserInfoError } from './auth.error';
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo';
 
 @Injectable()
 export class GoogleService {
@@ -16,7 +16,7 @@ export class GoogleService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly hasingService: HasingService,
-    private readonly rolesService: RolesService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authService: AuthService,
   ) {
     this.oauth2Client = new google.auth.OAuth2(
@@ -84,7 +84,7 @@ export class GoogleService {
 
       //4.1. Nếu không có user tức là người mới, tiến hành register user
       if (!user) {
-        const clientRoleId = await this.rolesService.getClientRoleId();
+        const clientRoleId = await this.sharedRoleRepository.getClientRoleId();
 
         //4.2 Tạo random password cho người dùng khi login bằng google
         const randomPassword = uuidv4();

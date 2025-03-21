@@ -1,7 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { HasingService } from 'src/shared/services/hasing.service';
 import { TokenService } from 'src/shared/services/token.service';
-import { RolesService } from './roles.service';
 import { generateOTP, isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helper';
 import {
   DisableTwoFactorBodyType,
@@ -34,12 +33,13 @@ import {
 } from './auth.error';
 import { TwoFactorService } from 'src/shared/services/2fa.service';
 import { InvalidPasswordException } from 'src/shared/error';
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hasingService: HasingService,
-    private readonly rolesService: RolesService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
@@ -86,7 +86,7 @@ export class AuthService {
 
       //2. dang ky user
       //2.1 lay cache role id client
-      const clientRoleId = await this.rolesService.getClientRoleId();
+      const clientRoleId = await this.sharedRoleRepository.getClientRoleId();
       const hashedPassword = await this.hasingService.hash(body.password);
 
       //2.2 tạo user
