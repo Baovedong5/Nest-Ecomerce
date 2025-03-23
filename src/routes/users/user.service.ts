@@ -29,7 +29,6 @@ export class UserService {
   async findById(id: number) {
     const user = await this.sharedUserRepository.findUniqueInclueRolePermissions({
       id,
-      deletedAt: null,
     });
 
     return user;
@@ -118,7 +117,6 @@ export class UserService {
 
       const currentUser = await this.sharedUserRepository.findUnique({
         id,
-        deletedAt: null,
       });
 
       if (!currentUser) {
@@ -135,7 +133,7 @@ export class UserService {
       });
 
       const updateUser = await this.sharedUserRepository.update(
-        { id, deletedAt: null },
+        { id },
         {
           ...data,
           updatedById,
@@ -169,7 +167,6 @@ export class UserService {
 
       const currentUser = await this.sharedUserRepository.findUnique({
         id,
-        deletedAt: null,
       });
 
       if (!currentUser) {
