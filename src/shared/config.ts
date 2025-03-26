@@ -30,6 +30,7 @@ const configSchema = zod.object({
   GOOGLE_REDIRECT_URL: zod.string(),
   GOOGLE_CLIENT_REDIRECT_URL: zod.string(),
   APP_NAME: zod.string(),
+  PREFIX_STATIC_ENDPOINT: zod.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);

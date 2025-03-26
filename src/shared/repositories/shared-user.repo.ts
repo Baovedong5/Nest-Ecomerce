@@ -13,13 +13,19 @@ export class SharedUserRepository {
 
   findUnique(where: WhereUniqueUserType): Promise<UserType | null> {
     return this.prismaService.user.findFirst({
-      where,
+      where: {
+        ...where,
+        deletedAt: null,
+      },
     });
   }
 
   findUniqueInclueRolePermissions(where: WhereUniqueUserType): Promise<UserIncludeRolePermissionType | null> {
     return this.prismaService.user.findFirst({
-      where,
+      where: {
+        ...where,
+        deletedAt: null,
+      },
       include: {
         role: {
           include: {
