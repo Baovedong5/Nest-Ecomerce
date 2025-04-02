@@ -4,11 +4,9 @@ export const EmptyBodySchema = z.object({}).strict();
 
 export type EmptyBodyType = z.infer<typeof EmptyBodySchema>;
 
-export const PaginationQuerySchema = z
-.object({
+export const PaginationQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
-})
-.strict();
+});
 
 export type PaginationQueryType = z.infer<typeof PaginationQuerySchema>;

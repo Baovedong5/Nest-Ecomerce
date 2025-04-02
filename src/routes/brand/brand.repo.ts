@@ -9,12 +9,13 @@ import {
   GetBrandResType,
   UpdateBrandBodyType,
 } from './brand.model';
+import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant';
 
 @Injectable()
 export class BrandRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async list(pagination: PaginationQueryType, languageId?: string): Promise<GetBrandResType> {
+  async list(pagination: PaginationQueryType, languageId: string): Promise<GetBrandResType> {
     const skip = (pagination.page - 1) * pagination.limit;
     const take = pagination.limit;
     const [totalItems, data] = await Promise.all([
@@ -29,7 +30,7 @@ export class BrandRepository {
         },
         include: {
           brandTranslations: {
-            where: languageId ? { languageId, deletedAt: null } : { deletedAt: null },
+            where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
           },
         },
         orderBy: {
@@ -49,7 +50,7 @@ export class BrandRepository {
     };
   }
 
-  findById(id: number, languageId?: string): Promise<GetBrandDetailResType | null> {
+  findById(id: number, languageId: string): Promise<GetBrandDetailResType | null> {
     return this.prismaService.brand.findUnique({
       where: {
         id,
@@ -57,7 +58,7 @@ export class BrandRepository {
       },
       include: {
         brandTranslations: {
-          where: languageId ? { languageId, deletedAt: null } : { deletedAt: null },
+          where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
         },
       },
     });
