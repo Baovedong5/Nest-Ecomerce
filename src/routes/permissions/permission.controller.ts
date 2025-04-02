@@ -4,13 +4,13 @@ import {
   CreatePermissionBodyDTO,
   GetPermissionDetailResDTO,
   GetPermissionParamsDTO,
-  GetPermissionQueryDTO,
   GetPermissionResDTO,
   UpdatePermissionBodyDTO,
 } from './permission.dto';
 import { PermissionService } from './permission.service';
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
+import { PaginationQueryDTO } from 'src/shared/dtos/request.dto';
 
 @Controller('permissions')
 export class PermissionController {
@@ -18,7 +18,7 @@ export class PermissionController {
 
   @Get()
   @ZodSerializerDto(GetPermissionResDTO)
-  list(@Query() query: GetPermissionQueryDTO) {
+  list(@Query() query: PaginationQueryDTO) {
     return this.permissionService.list({
       page: query.page,
       limit: query.limit,

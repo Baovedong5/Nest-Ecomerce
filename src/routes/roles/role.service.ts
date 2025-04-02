@@ -1,16 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { RoleRepository } from './role.repo';
-import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
+import { CreateRoleBodyType, UpdateRoleBodyType } from './role.model';
 import { NotFoundRecordException } from 'src/shared/error';
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helper';
 import { ProhibitedActionsOnBaseRoleException, RoleAlreadyExistsException } from './role.error';
 import { RoleName } from 'src/shared/constants/role.constant';
+import { PaginationQueryDTO } from 'src/shared/dtos/request.dto';
 
 @Injectable()
 export class RoleService {
   constructor(private readonly roleRepository: RoleRepository) {}
 
-  async list(pagination: GetRolesQueryType) {
+  async list(pagination: PaginationQueryDTO) {
     const roles = await this.roleRepository.list(pagination);
 
     return roles;

@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
-import {
-  CreatePermissionBodyType,
-  GetPermissionQueryType,
-  GetPermissionResType,
-  UpdatePermissionBodyType,
-} from './permission.model';
+import { CreatePermissionBodyType, GetPermissionResType, UpdatePermissionBodyType } from './permission.model';
 import { PermissionType } from 'src/shared/models/shared-permission.model';
+import { PaginationQueryDTO } from 'src/shared/dtos/request.dto';
 
 @Injectable()
 export class PermissionRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async list(pagination: GetPermissionQueryType): Promise<GetPermissionResType> {
+  async list(pagination: PaginationQueryDTO): Promise<GetPermissionResType> {
     const skip = (pagination.page - 1) * pagination.limit;
     const take = pagination.limit;
     const [totalItems, data] = await Promise.all([

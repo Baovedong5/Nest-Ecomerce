@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PermissionRepository } from './permission.repo';
-import { CreatePermissionBodyType, GetPermissionQueryType, UpdatePermissionBodyType } from './permission.model';
+import { CreatePermissionBodyType, UpdatePermissionBodyType } from './permission.model';
 import { NotFoundRecordException } from 'src/shared/error';
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helper';
 import { PermissionAlreadyExistsException } from './permission.error';
+import { PaginationQueryDTO } from 'src/shared/dtos/request.dto';
 
 @Injectable()
 export class PermissionService {
   constructor(private readonly permissionRepository: PermissionRepository) {}
 
-  async list(pagination: GetPermissionQueryType) {
+  async list(pagination: PaginationQueryDTO) {
     const data = await this.permissionRepository.list(pagination);
 
     return data;

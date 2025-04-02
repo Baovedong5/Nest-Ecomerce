@@ -9,13 +9,6 @@ export const GetPermissionResSchema = z.object({
   totalPages: z.number(), // tong so trang
 });
 
-export const GetPermissionQuerySchema = z
-  .object({
-    page: z.coerce.number().int().positive().default(1),
-    limit: z.coerce.number().int().positive().default(10),
-  })
-  .strict();
-
 export const GetPermissionParamsSchema = z
   .object({
     permissionId: z.coerce.number(),
@@ -34,7 +27,6 @@ export const CreatePermissionBodySchema = PermissionSchema.pick({
 export const UpdatePermissionBodySchema = CreatePermissionBodySchema;
 
 export type GetPermissionResType = z.infer<typeof GetPermissionResSchema>;
-export type GetPermissionQueryType = z.infer<typeof GetPermissionQuerySchema>;
 export type GetPermissionParamsType = z.infer<typeof GetPermissionParamsSchema>;
 export type GetPermissionDetailResType = z.infer<typeof GetPermissionDetailResSchema>;
 export type CreatePermissionBodyType = z.infer<typeof CreatePermissionBodySchema>;
