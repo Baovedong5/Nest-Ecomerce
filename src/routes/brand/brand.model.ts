@@ -1,22 +1,5 @@
 import { z } from 'zod';
-import { BrandTranslationSchema } from './brand-translation/brand-translation.model';
-
-export const BrandSchema = z.object({
-  id: z.number(),
-  logo: z.string().url().max(1000),
-  name: z.string().max(500),
-
-  createdById: z.number().nullable(),
-  updatedById: z.number().nullable(),
-  deletedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-export const BrandIncludeTranslationSchema = BrandSchema.extend({
-  brandTranslations: z.array(BrandTranslationSchema),
-});
+import { BrandIncludeTranslationSchema, BrandSchema } from 'src/shared/models/shared-brand.model';
 
 export const GetBrandResSchema = z.object({
   data: z.array(BrandIncludeTranslationSchema),
