@@ -4,7 +4,7 @@ import { HTTPMethod } from 'src/shared/constants/permission.constant';
 import { RoleName } from 'src/shared/constants/role.constant';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGER-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE'];
+const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE'];
 
 const prisma = new PrismaService();
 

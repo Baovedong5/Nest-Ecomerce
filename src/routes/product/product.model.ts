@@ -24,6 +24,7 @@ function generateSKUs(variants: VariantsType) {
     image: '',
   }));
 }
+
 export const VariantSchema = z.object({
   value: z.string().trim(),
   options: z.array(z.string().trim()),
@@ -76,6 +77,9 @@ export const ProductSchema = z.object({
   updatedAt: z.date(),
 });
 
+/**
+ * Dành cho client và guest
+ */
 export const GetProductsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
@@ -84,6 +88,16 @@ export const GetProductsQuerySchema = z.object({
   categories: z.array(z.coerce.number().int().positive()).optional(),
   minPrice: z.coerce.number().positive().optional(),
   maxPrice: z.coerce.number().positive().optional(),
+  createdById: z.coerce.number().int().positive().optional(),
+});
+
+/**
+ * Dành cho admin và seller
+ */
+
+export const GetManagerProductsQuerySchema = GetProductsQuerySchema.extend({
+  isPublic: z.preprocess((value) => value === 'true', z.boolean()).optional(),
+  createdById: z.coerce.number().int().positive(),
 });
 
 export const GetProductsResSchema = z.object({
@@ -160,6 +174,7 @@ export type ProductType = z.infer<typeof ProductSchema>;
 export type VariantsType = z.infer<typeof VariantsSchema>;
 export type GetProductsResType = z.infer<typeof GetProductsResSchema>;
 export type GetProductsQueryType = z.infer<typeof GetProductsQuerySchema>;
+export type GetManagerProductsQueryType = z.infer<typeof GetManagerProductsQuerySchema>;
 export type GetProductDetailResTYpe = z.infer<typeof GetProductDetailResSchema>;
 export type GetProductParamsType = z.infer<typeof GetProductParamsSchema>;
 export type CreateProductBodyType = z.infer<typeof CreateProductBodySchema>;
