@@ -4,7 +4,8 @@ import { HTTPMethod } from 'src/shared/constants/permission.constant';
 import { RoleName } from 'src/shared/constants/role.constant';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE'];
+const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART'];
+const clientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART'];
 
 const prisma = new PrismaService();
 
@@ -95,13 +96,24 @@ async function bootstrap() {
   });
 
   const adminPermissionIds = updatedPermissionInDb.map((item) => ({ id: item.id }));
+
   const sellerPermissionIds = updatedPermissionInDb
     .filter((item) => SellerModule.includes(item.module))
     .map((item) => ({
       id: item.id,
     }));
 
-  await Promise.all([updateRole(adminPermissionIds, RoleName.Admin), updateRole(sellerPermissionIds, RoleName.Seller)]);
+  const clientPermissionIds = updatedPermissionInDb
+    .filter((item) => clientModule.includes(item.module))
+    .map((item) => ({
+      id: item.id,
+    }));
+
+  await Promise.all([
+    updateRole(adminPermissionIds, RoleName.Admin),
+    updateRole(sellerPermissionIds, RoleName.Seller),
+    updateRole(clientPermissionIds, RoleName.Client),
+  ]);
 
   process.exit(0);
 }
