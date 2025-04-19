@@ -124,7 +124,7 @@ const updateRole = async (
   }[],
   roleName: string,
 ) => {
-  // Cập nhật lại các permissions trong Admin Role
+  // Cập nhật lại các permissions trong Role
   const role = await prisma.role.findFirstOrThrow({
     where: {
       name: roleName,
