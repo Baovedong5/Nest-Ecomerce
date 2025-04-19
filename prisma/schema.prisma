@@ -90,6 +90,7 @@ model User {
   createdOrders               Order[]               @relation("OrderCreatedBy")
   updatedOrders               Order[]               @relation("OrderUpdatedBy")
   deletedOrders               Order[]               @relation("OrderDeletedBy")
+  soldOrders                  Order[]               @relation("Shop")
   createdUserTranslations     UserTranslation[]     @relation("UserTranslationCreatedBy")
   updatedUserTranslations     UserTranslation[]     @relation("UserTranslationUpdatedBy")
   deletedUserTranslations     UserTranslation[]     @relation("UserTranslationDeletedBy")
@@ -239,6 +240,7 @@ model Product {
   reviews             Review[]
   productTranslations ProductTranslation[]
   orders              Order[]
+  productSKUSnapshots ProductSKUSnapshot[]
 
 
   createdById Int
@@ -415,13 +417,19 @@ model CartItem {
 model ProductSKUSnapshot {
   id          Int      @id @default(autoincrement())
   productName String   @db.VarChar(500)
-  price       Float
-  images      String[]
+  skuPrice    Float
+  image    String
   skuValue    String   @db.VarChar(500)
   skuId       Int?
   sku         SKU?     @relation(fields: [skuId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   orderId     Int?
   order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  quantity    Int
+  productId   Int?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  /// [ProductTranslations]
+  productTranslations  Json
 
   createdAt DateTime @default(now())
 }
@@ -433,17 +441,21 @@ model Order {
   status      OrderStatus
   items       ProductSKUSnapshot[]
   products    Product[]
+  /// [Receiver]
+  receiver    Json
+  shopId      Int?
+  shop        User?                @relation("Shop", fields: [shopId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   createdById Int?
-  createdBy   User? @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  createdBy   User?                @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   updatedById Int?
-  updatedBy   User? @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy   User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   deletedById Int?
-  deletedBy   User? @relation("OrderDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  deletedBy   User?                @relation("OrderDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
 
   @@index([deletedAt])
   @@index([status, deletedAt])
