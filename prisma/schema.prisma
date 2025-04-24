@@ -419,7 +419,7 @@ model ProductSKUSnapshot {
   id          Int      @id @default(autoincrement())
   productName String   @db.VarChar(500)
   skuPrice    Float
-  image    String
+  image       String
   skuValue    String   @db.VarChar(500)
   skuId       Int?
   sku         SKU?     @relation(fields: [skuId], references: [id], onDelete: SetNull, onUpdate: NoAction)
