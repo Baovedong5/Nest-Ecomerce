@@ -18,7 +18,7 @@ const configSchema = zod.object({
   ACCESS_TOKEN_EXPIRES_IN: zod.string(),
   REFRESH_TOKEN_SECRET: zod.string(),
   REFRESH_TOKEN_EXPIRES_IN: zod.string(),
-  SECRET_API_KEY: zod.string(),
+  PAYMENT_API_KEY: zod.string(),
   ADMIN_NAME: zod.string(),
   ADMIN_EMAIL: zod.string(),
   ADMIN_PASSWORD: zod.string(),

@@ -3,7 +3,7 @@ export const REQUEST_ROLE_PERMISSIONS = 'role_permissions';
 
 export const Auth_Types = {
   Bearer: 'Bearer',
-  APIKey: 'ApiKey',
+  PaymentAPIKey: 'PaymentAPIKey',
   None: 'None',
 } as const;
 

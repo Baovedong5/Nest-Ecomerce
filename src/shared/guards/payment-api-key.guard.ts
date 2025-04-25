@@ -2,12 +2,12 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import envConfig from '../config';
 
 @Injectable()
-export class APIKeyGuard implements CanActivate {
+export class PaymentAPIKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const xAPIKey = request.headers['x-api-key'];
+    const PaymentAPIKey = request.headers['payment-api-key'];
 
-    if (xAPIKey !== envConfig.SECRET_API_KEY) {
+    if (PaymentAPIKey !== envConfig.PAYMENT_API_KEY) {
       throw new UnauthorizedException();
     }
 
