@@ -19,6 +19,7 @@ import {
 } from './order.error';
 import { OrderStatus } from 'src/shared/constants/order.constant';
 import { isNotFoundPrismaError } from 'src/shared/helper';
+import { PaymentStatus } from 'src/shared/constants/payment.constant';
 
 @Injectable()
 export class OrderRepository {
@@ -135,7 +136,13 @@ export class OrderRepository {
 
     //5. Tạo order
     const orders = await this.prismaService.$transaction(async (tx) => {
-      const orders = await Promise.all(
+      const payment = await tx.payment.create({
+        data: {
+          status: PaymentStatus.PENDING,
+        },
+      });
+
+      const orders$ = Promise.all(
         body.map((item) =>
           tx.order.create({
             data: {
@@ -144,6 +151,7 @@ export class OrderRepository {
               receiver: item.receiver,
               createdById: userId,
               shopId: item.shopId,
+              paymentId: payment.id,
               items: {
                 create: item.cartItemIds.map((cartItemId) => {
                   const cartItem = cartItemMap.get(cartItemId)!;
@@ -180,13 +188,30 @@ export class OrderRepository {
       );
 
       //6. Xóa cartItem
-      await tx.cartItem.deleteMany({
+      const cartItem$ = tx.cartItem.deleteMany({
         where: {
           id: {
             in: allBodyCartItemIds,
           },
         },
       });
+
+      const sku$ = Promise.all(
+        cartItems.map((item) =>
+          tx.sKU.update({
+            where: {
+              id: item.sku.id,
+            },
+            data: {
+              stock: {
+                decrement: item.quantity,
+              },
+            },
+          }),
+        ),
+      );
+
+      const [orders] = await Promise.all([orders$, cartItem$, sku$]);
 
       return orders;
     });
