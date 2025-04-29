@@ -31,6 +31,8 @@ const configSchema = zod.object({
   GOOGLE_CLIENT_REDIRECT_URL: zod.string(),
   APP_NAME: zod.string(),
   PREFIX_STATIC_ENDPOINT: zod.string(),
+  REDIS_HOST: zod.string(),
+  REDIS_PORT: zod.coerce.number(),
 });
 
 const configServer = configSchema.safeParse(process.env);

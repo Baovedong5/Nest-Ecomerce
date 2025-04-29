@@ -66,11 +66,7 @@ export class CartRepository {
       throw NotFoundSKUException;
     }
 
-    if (!cartItem) {
-      throw NotFoundCartItemException;
-    }
-
-    if (isCreate && quantity + cartItem?.quantity > sku.stock) {
+    if (cartItem && isCreate && quantity + cartItem?.quantity > sku.stock) {
       throw inValidQuantityException;
     }
 

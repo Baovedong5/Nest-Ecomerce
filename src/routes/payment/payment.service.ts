@@ -6,7 +6,9 @@ import { WebhookPaymentBodyType } from './payment.model';
 export class PaymentService {
   constructor(private readonly paymentRepo: PaymentRepo) {}
 
-  receiver(body: WebhookPaymentBodyType) {
-    return this.paymentRepo.receiver(body);
+  async receiver(body: WebhookPaymentBodyType) {
+    const result = await this.paymentRepo.receiver(body);
+
+    return result;
   }
 }

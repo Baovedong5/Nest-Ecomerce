@@ -7,10 +7,15 @@ import { PREFIX_PAYMENT_CODE } from 'src/shared/constants/other.constant';
 import { OrderIncludeProductSKUSnapshotType } from 'src/shared/models/shared-order.model';
 import { PaymentStatus } from 'src/shared/constants/payment.constant';
 import { OrderStatus } from 'src/shared/constants/order.constant';
+import { PaymentProducer } from './paymeny.producer';
 
 @Injectable()
 export class PaymentRepo {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+
+    private readonly paymentProducer: PaymentProducer,
+  ) {}
 
   private getTotalPrice(orders: OrderIncludeProductSKUSnapshotType[]) {
     return orders.reduce((total, order) => {
@@ -33,77 +38,95 @@ export class PaymentRepo {
       amountOut = body.transferAmount;
     }
 
-    await this.prismaService.paymentTransaction.create({
-      data: {
-        gateway: body.gateway,
-        transactionDate: parse(body.transactionDate, 'yyyy-MM-dd HH:mm:ss', new Date()),
-        accountNumber: body.accountNumber,
-        subAccount: body.subAccount,
-        amountIn: amountIn,
-        amountOut: amountOut,
-        accumulated: body.accumulated,
-        code: body.code,
-        transactionContent: body.content,
-        referenceNumber: body.referenceCode,
-        body: body.description,
-      },
-    });
-
-    //2. Kiểm tra nội dung chuyển tiền và tổng số tiền có khớp không
-    const paymentId = body.code
-      ? Number(body.code.split(PREFIX_PAYMENT_CODE)[1])
-      : Number(body.content?.split(PREFIX_PAYMENT_CODE)[1]);
-
-    if (isNaN(paymentId)) {
-      throw new BadRequestException('Cannot get payment id from content');
-    }
-
-    const payment = await this.prismaService.payment.findUnique({
+    const paymentTransaction = await this.prismaService.paymentTransaction.findUnique({
       where: {
-        id: paymentId,
-      },
-      include: {
-        orders: {
-          include: {
-            items: true,
-          },
-        },
+        id: body.id,
       },
     });
 
-    if (!payment) {
-      throw new BadRequestException(`Cannot find payment with id: ${paymentId}`);
+    if (paymentTransaction) {
+      throw new BadRequestException('Transaction already exists');
     }
 
-    const { orders } = payment;
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.paymentTransaction.create({
+        data: {
+          id: body.id,
+          gateway: body.gateway,
+          transactionDate: parse(body.transactionDate, 'yyyy-MM-dd HH:mm:ss', new Date()),
+          accountNumber: body.accountNumber,
+          subAccount: body.subAccount,
+          amountIn: amountIn,
+          amountOut: amountOut,
+          accumulated: body.accumulated,
+          code: body.code,
+          transactionContent: body.content,
+          referenceNumber: body.referenceCode,
+          body: body.description,
+        },
+      });
 
-    const totalPrice = this.getTotalPrice(orders);
+      //2. Kiểm tra nội dung chuyển tiền và tổng số tiền có khớp không
+      const paymentId = body.code
+        ? Number(body.code.split(PREFIX_PAYMENT_CODE)[1])
+        : Number(body.content?.split(PREFIX_PAYMENT_CODE)[1]);
 
-    if (totalPrice !== body.transferAmount) {
-      throw new BadRequestException(`Price not match, expected ${totalPrice}, but got ${body.transferAmount}`);
-    }
+      if (isNaN(paymentId)) {
+        throw new BadRequestException('Cannot get payment id from content');
+      }
 
-    // 3. Cập nhật trạng thái đơn hàng
-    await this.prismaService.$transaction([
-      this.prismaService.payment.update({
+      const payment = await tx.payment.findUnique({
         where: {
           id: paymentId,
         },
-        data: {
-          status: PaymentStatus.SUCCESS,
-        },
-      }),
-      this.prismaService.order.updateMany({
-        where: {
-          id: {
-            in: orders.map((order) => order.id),
+        include: {
+          orders: {
+            include: {
+              items: true,
+            },
           },
         },
-        data: {
-          status: OrderStatus.PENDING_PICKUP,
-        },
-      }),
-    ]);
+      });
+
+      if (!payment) {
+        throw new BadRequestException(`Cannot find payment with id: ${paymentId}`);
+      }
+
+      const { orders } = payment;
+
+      const totalPrice = this.getTotalPrice(orders);
+
+      if (totalPrice !== body.transferAmount) {
+        throw new BadRequestException(`Price not match, expected ${totalPrice}, but got ${body.transferAmount}`);
+      }
+
+      // 3. Cập nhật trạng thái đơn hàng
+      await Promise.all([
+        tx.payment.update({
+          where: {
+            id: paymentId,
+          },
+          data: {
+            status: PaymentStatus.SUCCESS,
+          },
+        }),
+
+        tx.order.updateMany({
+          where: {
+            id: {
+              in: orders.map((order) => order.id),
+            },
+          },
+          data: {
+            status: OrderStatus.PENDING_PICKUP,
+          },
+        }),
+
+        this.paymentProducer.removeJob(paymentId),
+      ]);
+
+      return paymentId;
+    });
 
     return {
       message: 'Payment success',

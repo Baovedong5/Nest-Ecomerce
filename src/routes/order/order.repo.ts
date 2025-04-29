@@ -20,10 +20,14 @@ import {
 import { OrderStatus } from 'src/shared/constants/order.constant';
 import { isNotFoundPrismaError } from 'src/shared/helper';
 import { PaymentStatus } from 'src/shared/constants/payment.constant';
+import { OrderProducer } from './order.producer';
 
 @Injectable()
 export class OrderRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly orderProducer: OrderProducer,
+  ) {}
 
   async list(userId: number, query: GetOrderListQueryType): Promise<GetOrderListResType> {
     const { limit, page, status } = query;
@@ -65,7 +69,13 @@ export class OrderRepository {
     };
   }
 
-  async create(userId: number, body: CreateOrderBodyType): Promise<CreateOrderResType> {
+  async create(
+    userId: number,
+    body: CreateOrderBodyType,
+  ): Promise<{
+    paymentId: number;
+    orders: CreateOrderResType['data'];
+  }> {
     const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
 
     const cartItems = await this.prismaService.cartItem.findMany({
@@ -135,7 +145,7 @@ export class OrderRepository {
     }
 
     //5. Tạo order
-    const orders = await this.prismaService.$transaction(async (tx) => {
+    const [paymentId, orders] = await this.prismaService.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
@@ -211,13 +221,16 @@ export class OrderRepository {
         ),
       );
 
-      const [orders] = await Promise.all([orders$, cartItem$, sku$]);
+      const addCancelPaymentJob$ = this.orderProducer.addCancelPaymentJob(payment.id);
 
-      return orders;
+      const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$]);
+
+      return [payment.id, orders];
     });
 
     return {
-      data: orders,
+      paymentId,
+      orders,
     };
   }
 
