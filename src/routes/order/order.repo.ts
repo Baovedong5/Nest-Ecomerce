@@ -74,7 +74,7 @@ export class OrderRepository {
     body: CreateOrderBodyType,
   ): Promise<{
     paymentId: number;
-    orders: CreateOrderResType['data'];
+    orders: CreateOrderResType['orders'];
   }> {
     const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
 

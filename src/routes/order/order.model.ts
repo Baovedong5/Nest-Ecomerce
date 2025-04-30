@@ -39,7 +39,8 @@ export const CreateOrderBodySchema = z.array(
 );
 
 export const CreateOrderResSchema = z.object({
-  data: z.array(OrderSchema),
+  orders: z.array(OrderSchema),
+  paymentId: z.number(),
 });
 
 export const CancelOrderResSchema = OrderSchema;

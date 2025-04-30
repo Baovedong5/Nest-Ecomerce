@@ -12,6 +12,7 @@ import { TwoFactorService } from './services/2fa.service';
 import { SharedRoleRepository } from './repositories/shared-role.repo';
 import { PaymentAPIKeyGuard } from './guards/payment-api-key.guard';
 import { SharedPaymentRepository } from './repositories/shared-payment.repo';
+import { SharedWebsocketRepo } from './repositories/shared-websocket.repo';
 
 const sharedServices = [
   PrismaService,
@@ -22,6 +23,7 @@ const sharedServices = [
   TwoFactorService,
   SharedRoleRepository,
   SharedPaymentRepository,
+  SharedWebsocketRepo,
 ];
 
 @Global()
