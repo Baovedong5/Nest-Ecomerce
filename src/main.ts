@@ -15,7 +15,10 @@ async function bootstrap() {
   //declare cors
   app.enableCors();
 
-  app.useWebSocketAdapter(new WebsocketAdapter(app));
+  const websocketAdapter = new WebsocketAdapter(app);
+  await websocketAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(websocketAdapter);
 
   await app.listen(process.env.PORT ?? 8080);
 }
