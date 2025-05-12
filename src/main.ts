@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { TransformInterceptor } from './shared/interceptors/transform.interceptor';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { WebsocketAdapter } from './websockets/websocket.adapter';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { patchNestJsSwagger } from 'nestjs-zod';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,6 +16,31 @@ async function bootstrap() {
 
   //declare cors
   app.enableCors();
+
+  //trust proxy
+  app.set('trust proxy', 'loopback');
+
+  patchNestJsSwagger();
+  const config = new DocumentBuilder()
+    .setTitle('Ecommerce API')
+    .setDescription('The emcomerce API description')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addApiKey(
+      {
+        name: 'payment-api-key',
+        type: 'apiKey',
+        in: 'headers',
+      },
+      'payment-key',
+    )
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   const websocketAdapter = new WebsocketAdapter(app);
   await websocketAdapter.connectToRedis();

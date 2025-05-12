@@ -13,12 +13,16 @@ import { GetUserProfileResDTO, UpdateProfileResDTO } from 'src/shared/dtos/share
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator';
 import { ActiveRolePermission } from 'src/shared/decorators/active-role-permission.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 
 @Controller('users')
+@ApiBearerAuth()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', type: Number })
+  @ApiQuery({ name: 'limit', type: Number })
   @ZodSerializerDto(GetUsersResDTO)
   list(@Query() query: GetUserQueryDTO) {
     return this.userService.list({
@@ -28,6 +32,7 @@ export class UserController {
   }
 
   @Get(':userId')
+  @ApiParam({ name: 'userId', type: String })
   @ZodSerializerDto(GetUserProfileResDTO)
   findById(@Param() params: GetUserParamsDTO) {
     return this.userService.findById(params.userId);
@@ -48,6 +53,7 @@ export class UserController {
   }
 
   @Put(':userId')
+  @ApiParam({ name: 'userId', type: String })
   @ZodSerializerDto(UpdateProfileResDTO)
   update(
     @Body() body: UpdateUserBodyDTO,
@@ -64,6 +70,7 @@ export class UserController {
   }
 
   @Delete(':userId')
+  @ApiParam({ name: 'userId', type: String })
   @ZodSerializerDto(MessageResDTO)
   delete(
     @Param() params: GetUserParamsDTO,

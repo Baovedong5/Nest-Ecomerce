@@ -4,8 +4,10 @@ import { Auth, IsPublic } from 'src/shared/decorators/auth.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
 import { WebhookPaymentBodyDTO } from './payment.dto';
 import { PaymentService } from './payment.service';
+import { ApiSecurity } from '@nestjs/swagger';
 
 @Controller('payment')
+@ApiSecurity('payment-key')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
@@ -13,6 +15,6 @@ export class PaymentController {
   @ZodSerializerDto(MessageResDTO)
   @Auth(['PaymentAPIKey'])
   receiver(@Body() body: WebhookPaymentBodyDTO) {
-     return this.paymentService.receiver(body);
+    return this.paymentService.receiver(body);
   }
 }
