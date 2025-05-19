@@ -30,6 +30,7 @@ import envConfig from './shared/config';
 import { WebSocketModule } from './websockets/websocket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard';
+import { ReviewModule } from './routes/review/review.module';
 
 @Module({
   imports: [
@@ -51,8 +52,14 @@ import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-prox
     ThrottlerModule.forRoot({
       throttlers: [
         {
+          name: 'short',
           ttl: 60000, // 1 minute
-          limit: 10,
+          limit: 5,
+        },
+        {
+          name: 'long',
+          ttl: 120000, // 2 minutes
+          limit: 7,
         },
       ],
     }),
@@ -74,6 +81,7 @@ import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-prox
     OrderModule,
     PaymentModule,
     WebSocketModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [
