@@ -31,9 +31,12 @@ import { WebSocketModule } from './websockets/websocket.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard';
 import { ReviewModule } from './routes/review/review.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     BullModule.forRoot({
       connection: {
         host: envConfig.REDIS_HOST,
@@ -100,6 +103,7 @@ import { ReviewModule } from './routes/review/review.module';
       useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
+    RemoveRefreshTokenCronjob,
   ],
 })
 export class AppModule {}
