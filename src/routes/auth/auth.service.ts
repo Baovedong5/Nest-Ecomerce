@@ -47,19 +47,10 @@ export class AuthService {
     private readonly twoFactorService: TwoFactorService,
   ) {}
 
-  async validateVerificationCode({
-    email,
-    code,
-    type,
-  }: {
-    email: string;
-    code: string;
-    type: TypeOfVerifycationCodeType;
-  }) {
+  async validateVerificationCode({ email, type }: { email: string; type: TypeOfVerifycationCodeType }) {
     const verificationCode = await this.authRepository.findUniqueVerificationCode({
-      email_code_type: {
+      email_type: {
         email,
-        code,
         type,
       },
     });
@@ -80,7 +71,6 @@ export class AuthService {
       //1. kiểm tra xem mã code có hợp lệ hoặc hết hạn không
       await this.validateVerificationCode({
         email: body.email,
-        code: body.code,
         type: TypeOfVerifycationCode.REGISTER,
       });
 
@@ -99,9 +89,8 @@ export class AuthService {
           roleId: clientRoleId,
         }),
         this.authRepository.deleteVerificationCode({
-          email_code_type: {
+          email_type: {
             email: body.email,
-            code: body.code,
             type: TypeOfVerifycationCode.REGISTER,
           },
         }),
@@ -192,7 +181,6 @@ export class AuthService {
         //2.3 Kiểm tra mã OTP hợp lệ hay không
         await this.validateVerificationCode({
           email: user.email,
-          code: body.code,
           type: TypeOfVerifycationCode.LOGIN,
         });
       }
@@ -332,7 +320,6 @@ export class AuthService {
     //2. Kiểm tra xem mã otp có hợp lệ không
     await this.validateVerificationCode({
       email,
-      code,
       type: TypeOfVerifycationCode.FORGOT_PASSWORD,
     });
 
@@ -341,7 +328,7 @@ export class AuthService {
     await Promise.all([
       this.sharedUserRepository.update({ id: user.id }, { password: hashedPassword, updatedById: user.id }),
       this.authRepository.deleteVerificationCode({
-        email_code_type: { email, code, type: TypeOfVerifycationCode.FORGOT_PASSWORD },
+        email_type: { email, type: TypeOfVerifycationCode.FORGOT_PASSWORD },
       }),
     ]);
 
@@ -405,7 +392,6 @@ export class AuthService {
       // 3. Kiểm tra mã OTP có hợp lệ hay không
       await this.validateVerificationCode({
         email: user.email,
-        code,
         type: TypeOfVerifycationCode.DISABLE_2FA,
       });
     }
