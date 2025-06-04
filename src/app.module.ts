@@ -35,9 +35,35 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
+import { LoggerModule } from 'nestjs-pino';
+import pino from 'pino';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        serializers: {
+          req(req: any) {
+            return {
+              method: req.method,
+              url: req.url,
+              params: req.params,
+              query: req.query,
+            };
+          },
+          res(res: any) {
+            return {
+              statusCode: res.statusCode,
+            };
+          },
+        },
+        stream: pino.destination({
+          dest: path.resolve('logs/app.log'),
+          sync: false,
+          mkdir: true,
+        }),
+      },
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: () => {
