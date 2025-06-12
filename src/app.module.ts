@@ -57,11 +57,11 @@ import pino from 'pino';
             };
           },
         },
-        stream: pino.destination({
-          dest: path.resolve('logs/app.log'),
-          sync: false,
-          mkdir: true,
-        }),
+        // stream: pino.destination({
+        //   dest: path.resolve('logs/app.log'),
+        //   sync: false,
+        //   mkdir: true,
+        // }),
       },
     }),
     CacheModule.registerAsync({
