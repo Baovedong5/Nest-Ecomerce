@@ -21,6 +21,7 @@ import { OrderStatus } from 'src/shared/constants/order.constant';
 import { isNotFoundPrismaError } from 'src/shared/helper';
 import { PaymentStatus } from 'src/shared/constants/payment.constant';
 import { OrderProducer } from './order.producer';
+import { VersionConflictException } from 'src/shared/error';
 
 @Injectable()
 export class OrderRepository {
@@ -76,105 +77,106 @@ export class OrderRepository {
     paymentId: number;
     orders: CreateOrderResType['orders'];
   }> {
-    const [paymentId, orders] = await this.prismaService.$transaction(async (tx) => {
-      const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
+    const [paymentId, orders] = await this.prismaService.$transaction<[number, CreateOrderResType['orders']]>(
+      async (tx) => {
+        const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
 
-      const cartItemsForSKUId = await tx.cartItem.findMany({
-        where: {
-          id: {
-            in: allBodyCartItemIds,
+        // const cartItemsForSKUId = await tx.cartItem.findMany({
+        //   where: {
+        //     id: {
+        //       in: allBodyCartItemIds,
+        //     },
+        //     userId,
+        //   },
+        //   select: {
+        //     skuId: true,
+        //   },
+        // });
+
+        // // Khóa database
+        // const skuIds = cartItemsForSKUId.map((cartItem) => cartItem.skuId);
+
+        // await tx.$queryRaw`
+        //   SELECT * FROM "SKU" WHERE id IN (${Prisma.join(skuIds)}) FOR UPDATE
+        // `;
+
+        const cartItems = await tx.cartItem.findMany({
+          where: {
+            id: {
+              in: allBodyCartItemIds,
+            },
+            userId,
           },
-          userId,
-        },
-        select: {
-          skuId: true,
-        },
-      });
-
-      // Khóa database
-      const skuIds = cartItemsForSKUId.map((cartItem) => cartItem.skuId);
-
-      await tx.$queryRaw`
-        SELECT * FROM "SKU" WHERE id IN (${Prisma.join(skuIds)}) FOR UPDATE
-      `;
-
-      const cartItems = await tx.cartItem.findMany({
-        where: {
-          id: {
-            in: allBodyCartItemIds,
-          },
-          userId,
-        },
-        include: {
-          sku: {
-            include: {
-              product: {
-                include: {
-                  productTranslations: true,
+          include: {
+            sku: {
+              include: {
+                product: {
+                  include: {
+                    productTranslations: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
-
-      //1. Kiểm tra xem tất cả cartItemmIds có tồn tại trong db không
-      if (cartItems.length !== allBodyCartItemIds.length) {
-        throw NotFoundCartItemException;
-      }
-
-      //2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
-      const isOutOfStock = cartItems.some((item) => {
-        return item.sku.stock < item.quantity;
-      });
-
-      if (isOutOfStock) {
-        throw OutOfStockSKUException;
-      }
-
-      //3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào đã bị xóa hay ẩn không
-      const isExistNotReadyProduct = cartItems.some(
-        (item) =>
-          item.sku.product.deletedAt !== null ||
-          item.sku.product.publishedAt === null ||
-          item.sku.product.publishedAt > new Date(),
-      );
-
-      if (isExistNotReadyProduct) {
-        throw ProductNotFoundException;
-      }
-
-      //4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopId gửi lên không
-      const cartItemMap = new Map<number, (typeof cartItems)[0]>();
-      cartItems.forEach((item) => {
-        cartItemMap.set(item.id, item);
-      });
-
-      const isValidShop = body.every((item) => {
-        const bodyCartItemIds = item.cartItemIds;
-        return bodyCartItemIds.every((cartItemId) => {
-          // Nếu đã đến bước này thì cartItem luôn luôn có giá trị
-          // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên r
-          const cartItem = cartItemMap.get(cartItemId)!;
-          return item.shopId === cartItem.sku.createdById;
         });
-      });
 
-      if (!isValidShop) {
-        throw SKUNotBelongToShopException;
-      }
+        //1. Kiểm tra xem tất cả cartItemmIds có tồn tại trong db không
+        if (cartItems.length !== allBodyCartItemIds.length) {
+          throw NotFoundCartItemException;
+        }
 
-      //5. Tạo order
+        //2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
+        const isOutOfStock = cartItems.some((item) => {
+          return item.sku.stock < item.quantity;
+        });
 
-      const payment = await tx.payment.create({
-        data: {
-          status: PaymentStatus.PENDING,
-        },
-      });
+        if (isOutOfStock) {
+          throw OutOfStockSKUException;
+        }
 
-      const orders$ = Promise.all(
-        body.map((item) =>
-          tx.order.create({
+        //3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào đã bị xóa hay ẩn không
+        const isExistNotReadyProduct = cartItems.some(
+          (item) =>
+            item.sku.product.deletedAt !== null ||
+            item.sku.product.publishedAt === null ||
+            item.sku.product.publishedAt > new Date(),
+        );
+
+        if (isExistNotReadyProduct) {
+          throw ProductNotFoundException;
+        }
+
+        //4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopId gửi lên không
+        const cartItemMap = new Map<number, (typeof cartItems)[0]>();
+        cartItems.forEach((item) => {
+          cartItemMap.set(item.id, item);
+        });
+
+        const isValidShop = body.every((item) => {
+          const bodyCartItemIds = item.cartItemIds;
+          return bodyCartItemIds.every((cartItemId) => {
+            // Nếu đã đến bước này thì cartItem luôn luôn có giá trị
+            // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên r
+            const cartItem = cartItemMap.get(cartItemId)!;
+            return item.shopId === cartItem.sku.createdById;
+          });
+        });
+
+        if (!isValidShop) {
+          throw SKUNotBelongToShopException;
+        }
+
+        //5. Tạo order
+        const payment = await tx.payment.create({
+          data: {
+            status: PaymentStatus.PENDING,
+          },
+        });
+
+        const orders: CreateOrderResType['orders'] = [];
+
+        for (const item of body) {
+          const order = await tx.order.create({
             data: {
               userId,
               status: OrderStatus.PENDING_PAYMENT,
@@ -213,40 +215,49 @@ export class OrderRepository {
                 }),
               },
             },
-          }),
-        ),
-      );
+          });
 
-      //6. Xóa cartItem
-      const cartItem$ = tx.cartItem.deleteMany({
-        where: {
-          id: {
-            in: allBodyCartItemIds,
+          orders.push(order);
+        }
+
+        //6. Xóa cartItem
+        await tx.cartItem.deleteMany({
+          where: {
+            id: {
+              in: allBodyCartItemIds,
+            },
           },
-        },
-      });
+        });
 
-      const sku$ = Promise.all(
-        cartItems.map((item) =>
-          tx.sKU.update({
-            where: {
-              id: item.sku.id,
-            },
-            data: {
-              stock: {
-                decrement: item.quantity,
+        for (const cartItem of cartItems) {
+          await tx.sKU
+            .update({
+              where: {
+                id: cartItem.sku.id,
+                updatedAt: cartItem.sku.updatedAt, // Đảm bảo không có ai cập nhật SKU trong khi chúng ta đang giảm stock
+                stock: {
+                  gte: cartItem.quantity, // Đảm bảo stock đủ để giảm
+                },
               },
-            },
-          }),
-        ),
-      );
+              data: {
+                stock: {
+                  decrement: cartItem.quantity,
+                },
+              },
+            })
+            .catch((e) => {
+              if (isNotFoundPrismaError(e)) {
+                throw VersionConflictException;
+              }
+              throw e;
+            });
+        }
 
-      const addCancelPaymentJob$ = this.orderProducer.addCancelPaymentJob(payment.id);
+        await this.orderProducer.addCancelPaymentJob(payment.id);
 
-      const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$]);
-
-      return [payment.id, orders];
-    });
+        return [payment.id, orders];
+      },
+    );
 
     return {
       paymentId,
