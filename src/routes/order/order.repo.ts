@@ -23,7 +23,9 @@ import { PaymentStatus } from 'src/shared/constants/payment.constant';
 import { OrderProducer } from './order.producer';
 import { VersionConflictException } from 'src/shared/error';
 import { redlock } from 'src/shared/redis';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 @Injectable()
+@SerializeAll()
 export class OrderRepository {
   constructor(
     private readonly prismaService: PrismaService,
@@ -67,7 +69,7 @@ export class OrderRepository {
       limit,
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
-    };
+    } as any;
   }
 
   async create(
@@ -179,7 +181,7 @@ export class OrderRepository {
           const orders: CreateOrderResType['orders'] = [];
 
           for (const item of body) {
-            const order = await tx.order.create({
+            const order = (await tx.order.create({
               data: {
                 userId,
                 status: OrderStatus.PENDING_PAYMENT,
@@ -218,7 +220,7 @@ export class OrderRepository {
                   }),
                 },
               },
-            });
+            })) as any;
 
             orders.push(order);
           }
@@ -273,7 +275,7 @@ export class OrderRepository {
   }
 
   async detail(userId: number, orderId: number): Promise<GetOrderDetailResType> {
-    const orders = await this.prismaService.order.findUnique({
+    const orders = (await this.prismaService.order.findUnique({
       where: {
         id: orderId,
         userId,
@@ -282,7 +284,7 @@ export class OrderRepository {
       include: {
         items: true,
       },
-    });
+    })) as any;
 
     if (!orders) {
       throw OrderNotFoundException;
@@ -305,7 +307,7 @@ export class OrderRepository {
         throw CannotCancelOrderException;
       }
 
-      const updatedOrder = await this.prismaService.order.update({
+      const updatedOrder = (await this.prismaService.order.update({
         where: {
           id: orderId,
           userId,
@@ -315,7 +317,7 @@ export class OrderRepository {
           status: OrderStatus.CANCELLED,
           updatedById: userId,
         },
-      });
+      })) as any;
 
       return updatedOrder;
     } catch (error) {

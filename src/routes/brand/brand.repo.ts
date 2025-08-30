@@ -10,8 +10,10 @@ import {
   UpdateBrandBodyType,
 } from './brand.model';
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class BrandRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -47,7 +49,7 @@ export class BrandRepository {
       limit: pagination.limit,
       totalPages: Math.ceil(totalItems / pagination.limit),
       data,
-    };
+    } as any;
   }
 
   findById(id: number, languageId: string): Promise<GetBrandDetailResType | null> {
@@ -61,7 +63,7 @@ export class BrandRepository {
           where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
         },
       },
-    });
+    }) as any;
   }
 
   create({
@@ -83,7 +85,7 @@ export class BrandRepository {
           },
         },
       },
-    });
+    }) as any;
   }
 
   update({
@@ -111,25 +113,27 @@ export class BrandRepository {
           },
         },
       },
-    });
+    }) as any;
   }
 
   delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean): Promise<BrandType> {
-    return isHard
-      ? this.prismaService.brand.delete({
-          where: {
-            id,
-          },
-        })
-      : this.prismaService.brand.update({
-          where: {
-            id,
-            deletedAt: null,
-          },
-          data: {
-            deletedById,
-            deletedAt: new Date(),
-          },
-        });
+    return (
+      isHard
+        ? this.prismaService.brand.delete({
+            where: {
+              id,
+            },
+          })
+        : this.prismaService.brand.update({
+            where: {
+              id,
+              deletedAt: null,
+            },
+            data: {
+              deletedById,
+              deletedAt: new Date(),
+            },
+          })
+    ) as any;
   }
 }

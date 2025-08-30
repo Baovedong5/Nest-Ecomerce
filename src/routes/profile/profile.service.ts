@@ -13,7 +13,7 @@ export class ProfileService {
   ) {}
 
   async getProfile(userId: number) {
-    const user = await this.sharedUserRepository.findUniqueInclueRolePermissions({
+    const user = await this.sharedUserRepository.findUniqueIncludeRolePermissions({
       id: userId,
     });
 

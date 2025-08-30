@@ -8,8 +8,10 @@ import {
   UpdateCategoryBodyType,
 } from './category.model';
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class CategoryRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -38,7 +40,7 @@ export class CategoryRepository {
     return {
       data: categories,
       totalItems: categories.length,
-    };
+    } as any;
   }
 
   findById({ id, languageId }: { id: number; languageId: string }): Promise<CategoryInCluedeTranslationType | null> {
@@ -52,7 +54,7 @@ export class CategoryRepository {
           where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
         },
       },
-    });
+    }) as any;
   }
 
   create({
@@ -72,7 +74,7 @@ export class CategoryRepository {
           where: { deletedAt: null },
         },
       },
-    });
+    }) as any;
   }
 
   update({
@@ -98,7 +100,7 @@ export class CategoryRepository {
           where: { deletedAt: null },
         },
       },
-    });
+    }) as any;
   }
 
   delete(
@@ -111,21 +113,23 @@ export class CategoryRepository {
     },
     isHard?: boolean,
   ): Promise<CategoryType> {
-    return isHard
-      ? this.prismaService.category.delete({
-          where: {
-            id,
-          },
-        })
-      : this.prismaService.category.update({
-          where: {
-            id,
-            deletedAt: null,
-          },
-          data: {
-            deletedAt: new Date(),
-            deletedById,
-          },
-        });
+    return (
+      isHard
+        ? this.prismaService.category.delete({
+            where: {
+              id,
+            },
+          })
+        : this.prismaService.category.update({
+            where: {
+              id,
+              deletedAt: null,
+            },
+            data: {
+              deletedAt: new Date(),
+              deletedById,
+            },
+          })
+    ) as any;
   }
 }

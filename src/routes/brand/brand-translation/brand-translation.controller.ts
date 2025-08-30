@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { BrandTranslationService } from './brand-translation.service';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { ZodResponse, ZodSerializerDto } from 'nestjs-zod';
 import {
   CreateBrandTranslationDTO,
   GetBrandTranslationDetailResDTO,
@@ -15,13 +15,13 @@ export class BrandTranslationController {
   constructor(private readonly brandTranslationService: BrandTranslationService) {}
 
   @Get(':brandTranslationId')
-  @ZodSerializerDto(GetBrandTranslationDetailResDTO)
+  @ZodResponse({ type: GetBrandTranslationDetailResDTO })
   findById(@Param() params: GetBrandTranslationParamsDTO) {
     return this.brandTranslationService.findById(params.brandTranslationId);
   }
 
   @Post()
-  @ZodSerializerDto(GetBrandTranslationDetailResDTO)
+  @ZodResponse({ type: GetBrandTranslationDetailResDTO })
   create(@Body() body: CreateBrandTranslationDTO, @ActiveUser('userId') userId: number) {
     return this.brandTranslationService.create({
       createdById: userId,
@@ -30,7 +30,7 @@ export class BrandTranslationController {
   }
 
   @Put(':brandTranslationId')
-  @ZodSerializerDto(GetBrandTranslationDetailResDTO)
+  @ZodResponse({ type: GetBrandTranslationDetailResDTO })
   update(
     @Param() params: GetBrandTranslationParamsDTO,
     @Body() body: UpdateBrandTranslationDTO,
@@ -44,7 +44,7 @@ export class BrandTranslationController {
   }
 
   @Delete(':brandTranslationId')
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   delete(@Param() params: GetBrandTranslationParamsDTO, @ActiveUser('userId') userId: number) {
     return this.brandTranslationService.delete({
       id: params.brandTranslationId,

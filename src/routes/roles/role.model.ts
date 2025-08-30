@@ -14,6 +14,13 @@ export const GetRolesResSchema = z.object({
   totalPages: z.number(),
 });
 
+export const GetRolesQuerySchema = z
+  .object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().default(10),
+  })
+  .strict();
+
 export const GetRoleParamsSchema = z
   .object({
     roleId: z.coerce.number(),
@@ -22,7 +29,7 @@ export const GetRoleParamsSchema = z
 
 export const GetRoleDetailResSchema = RoleWithPermissionsSchema;
 
-export const CreateRoleBodyShema = RoleSchema.pick({
+export const CreateRoleBodySchema = RoleSchema.pick({
   name: true,
   description: true,
   isActive: true,
@@ -32,8 +39,8 @@ export const CreateRoleResSchema = RoleSchema;
 
 export const UpdateRoleBodySchema = RoleSchema.pick({
   name: true,
-  isActive: true,
   description: true,
+  isActive: true,
 })
   .extend({
     permissionIds: z.array(z.number()),
@@ -42,8 +49,9 @@ export const UpdateRoleBodySchema = RoleSchema.pick({
 
 export type RoleWithPermissionsType = z.infer<typeof RoleWithPermissionsSchema>;
 export type GetRolesResType = z.infer<typeof GetRolesResSchema>;
-export type GetRoleParamsType = z.infer<typeof GetRoleParamsSchema>;
+export type GetRolesQueryType = z.infer<typeof GetRolesQuerySchema>;
 export type GetRoleDetailResType = z.infer<typeof GetRoleDetailResSchema>;
-export type CreateRoleBodyType = z.infer<typeof CreateRoleBodyShema>;
 export type CreateRoleResType = z.infer<typeof CreateRoleResSchema>;
+export type CreateRoleBodyType = z.infer<typeof CreateRoleBodySchema>;
+export type GetRoleParamsType = z.infer<typeof GetRoleParamsSchema>;
 export type UpdateRoleBodyType = z.infer<typeof UpdateRoleBodySchema>;

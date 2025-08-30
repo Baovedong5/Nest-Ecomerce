@@ -19,8 +19,10 @@ import {
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant';
 import { Prisma } from '@prisma/client';
 import { isNotFoundPrismaError } from 'src/shared/helper';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class CartRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -86,7 +88,7 @@ export class CartRepository {
       throw ProductNotFoundException;
     }
 
-    return sku;
+    return sku as any;
   }
 
   // async findAll({
@@ -291,7 +293,7 @@ export class CartRepository {
         skuId: body.skuId,
         quantity: body.quantity,
       },
-    });
+    }) as any;
   }
 
   async update({
@@ -327,7 +329,7 @@ export class CartRepository {
         }
 
         throw error;
-      });
+      }) as any;
   }
 
   delete(userId: number, body: DeleteCartBodyType): Promise<{ count: number }> {

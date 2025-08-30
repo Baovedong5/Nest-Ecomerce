@@ -4,20 +4,22 @@ import { TransformInterceptor } from './shared/interceptors/transform.intercepto
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { WebsocketAdapter } from './websockets/websocket.adapter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { patchNestJsSwagger } from 'nestjs-zod';
 import helmet from 'helmet';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { Logger } from 'nestjs-pino';
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+  //   bufferLogs: true,
+  // });
 
   const reflector = app.get(Reflector);
 
   //logger
-  app.useLogger(app.get(Logger));
+  // app.useLogger(app.get(Logger));
 
   //declare interceptor global
   // app.useGlobalInterceptors(new TransformInterceptor(reflector));
@@ -33,7 +35,6 @@ async function bootstrap() {
   //trust proxy
   app.set('trust proxy', 'loopback');
 
-  patchNestJsSwagger();
   const config = new DocumentBuilder()
     .setTitle('Ecommerce API')
     .setDescription('The emcomerce API description')
@@ -48,8 +49,8 @@ async function bootstrap() {
       'payment-key',
     )
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory, {
+  const documentFactory = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, cleanupOpenApiDoc(documentFactory), {
     swaggerOptions: {
       persistAuthorization: true,
     },

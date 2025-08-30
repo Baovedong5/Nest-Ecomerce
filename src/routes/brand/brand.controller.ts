@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { IsPublic } from 'src/shared/decorators/auth.decorator';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { ZodResponse, ZodSerializerDto } from 'nestjs-zod';
 import {
   CreateBrandBodyDTO,
   GetBrandDetailResDTO,
@@ -19,20 +19,20 @@ export class BrandController {
 
   @Get()
   @IsPublic()
-  @ZodSerializerDto(GetBrandResDTO)
+  @ZodResponse({ type: GetBrandResDTO })
   list(@Query() query: PaginationQueryDTO) {
     return this.brandService.list(query);
   }
 
   @Get(':brandId')
   @IsPublic()
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ZodResponse({ type: GetBrandDetailResDTO })
   findById(@Param() params: GetBrandParamsDTO) {
     return this.brandService.findById(params.brandId);
   }
 
   @Post()
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ZodResponse({ type: GetBrandDetailResDTO })
   create(@Body() body: CreateBrandBodyDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.create({
       createdById: userId,
@@ -41,7 +41,7 @@ export class BrandController {
   }
 
   @Put(':brandId')
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ZodResponse({ type: GetBrandDetailResDTO })
   update(@Param() params: GetBrandParamsDTO, @Body() body: UpdateBrandBodyDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.update({
       id: params.brandId,
@@ -51,7 +51,7 @@ export class BrandController {
   }
 
   @Delete(':brandId')
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   delete(@Param() params: GetBrandParamsDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.delete({
       id: params.brandId,

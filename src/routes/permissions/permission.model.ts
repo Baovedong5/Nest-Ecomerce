@@ -1,13 +1,20 @@
 import { PermissionSchema } from 'src/shared/models/shared-permission.model';
 import { z } from 'zod';
 
-export const GetPermissionResSchema = z.object({
+export const GetPermissionsResSchema = z.object({
   data: z.array(PermissionSchema),
-  totalItems: z.number(), // tong so item
-  page: z.number(), // trang hien tai
-  limit: z.number(), // so item tren 1 trang
-  totalPages: z.number(), // tong so trang
+  totalItems: z.number(), // Tổng số item
+  page: z.number(), // Số trang hiện tại
+  limit: z.number(), // Số item trên 1 trang
+  totalPages: z.number(), // Tổng số trang
 });
+
+export const GetPermissionsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().default(10),
+  })
+  .strict();
 
 export const GetPermissionParamsSchema = z
   .object({
@@ -19,15 +26,17 @@ export const GetPermissionDetailResSchema = PermissionSchema;
 
 export const CreatePermissionBodySchema = PermissionSchema.pick({
   name: true,
-  method: true,
   path: true,
+  method: true,
   module: true,
 }).strict();
 
 export const UpdatePermissionBodySchema = CreatePermissionBodySchema;
 
-export type GetPermissionResType = z.infer<typeof GetPermissionResSchema>;
-export type GetPermissionParamsType = z.infer<typeof GetPermissionParamsSchema>;
+export type PermissionType = z.infer<typeof PermissionSchema>;
+export type GetPermissionsResType = z.infer<typeof GetPermissionsResSchema>;
+export type GetPermissionsQueryType = z.infer<typeof GetPermissionsQuerySchema>;
 export type GetPermissionDetailResType = z.infer<typeof GetPermissionDetailResSchema>;
 export type CreatePermissionBodyType = z.infer<typeof CreatePermissionBodySchema>;
+export type GetPermissionParamsType = z.infer<typeof GetPermissionParamsSchema>;
 export type UpdatePermissionBodyType = z.infer<typeof UpdatePermissionBodySchema>;

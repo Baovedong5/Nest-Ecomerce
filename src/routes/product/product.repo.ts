@@ -9,8 +9,10 @@ import {
 import { ALL_LANGUAGES_CODE, OrderByType, SortBy, SortByType } from 'src/shared/constants/other.constant';
 import { Prisma } from '@prisma/client';
 import { ProductType } from 'src/shared/models/shared-product.model';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class ProductRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -138,7 +140,7 @@ export class ProductRepository {
       limit: limit,
       totalPages: Math.ceil(totalItems / limit),
       data,
-    };
+    } as any;
   }
 
   findById(productId: number): Promise<ProductType | null> {
@@ -147,7 +149,7 @@ export class ProductRepository {
         id: productId,
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
   getDetail({
@@ -205,7 +207,7 @@ export class ProductRepository {
           },
         },
       },
-    });
+    }) as any;
   }
 
   create({
@@ -265,7 +267,7 @@ export class ProductRepository {
           },
         },
       },
-    });
+    }) as any;
   }
 
   async update({
@@ -319,7 +321,7 @@ export class ProductRepository {
         };
       });
 
-    const [product] = await this.prismaService.$transaction([
+    const [product] = (await this.prismaService.$transaction([
       //Cập nhật product
       this.prismaService.product.update({
         where: {
@@ -367,7 +369,7 @@ export class ProductRepository {
       this.prismaService.sKU.createMany({
         data: skusToCreate,
       }),
-    ]);
+    ])) as any;
 
     return product;
   }
@@ -378,10 +380,10 @@ export class ProductRepository {
         where: {
           id,
         },
-      });
+      }) as any;
     }
 
-    const [product] = await Promise.all([
+    const [product] = (await Promise.all([
       this.prismaService.product.update({
         where: {
           id,
@@ -412,7 +414,7 @@ export class ProductRepository {
           deletedById,
         },
       }),
-    ]);
+    ])) as any;
 
     return product;
   }

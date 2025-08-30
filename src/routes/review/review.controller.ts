@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ReviewService } from './review.service';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { ZodResponse, ZodSerializerDto } from 'nestjs-zod';
 import {
   CreateReviewBodyDTO,
   CreateReviewResDTO,
@@ -20,19 +20,19 @@ export class ReviewController {
 
   @IsPublic()
   @Get('/products/:productId')
-  @ZodSerializerDto(GetReviewsDTO)
+  @ZodResponse({ type: GetReviewsDTO })
   getReviews(@Param() params: GetReviewsParamsDTO, @Query() pagination: PaginationQueryDTO) {
     return this.reviewService.list(params.productId, pagination);
   }
 
   @Post()
-  @ZodSerializerDto(CreateReviewResDTO)
+  @ZodResponse({ type: CreateReviewResDTO })
   createReview(@Body() body: CreateReviewBodyDTO, @ActiveUser('userId') userId: number) {
     return this.reviewService.create(userId, body);
   }
 
   @Put(':reviewId')
-  @ZodSerializerDto(UpdateReviewResDTO)
+  @ZodResponse({ type: UpdateReviewResDTO })
   updateReview(
     @Body() body: UpdateReviewBodyDTO,
     @ActiveUser('userId') userId: number,

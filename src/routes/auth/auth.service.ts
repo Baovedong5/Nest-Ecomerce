@@ -59,7 +59,7 @@ export class AuthService {
       throw InvalidOTPException;
     }
 
-    if (verificationCode.expiresAt < new Date()) {
+    if (new Date(verificationCode.expiresAt) < new Date()) {
       throw OTPExpiredException;
     }
 
@@ -126,7 +126,7 @@ export class AuthService {
       email: body.email,
       code,
       type: body.type,
-      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN)),
+      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN)).toISOString(),
     });
 
     //3. gửi mã OTP

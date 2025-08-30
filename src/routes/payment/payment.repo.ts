@@ -8,8 +8,10 @@ import { OrderIncludeProductSKUSnapshotType } from 'src/shared/models/shared-ord
 import { PaymentStatus } from 'src/shared/constants/payment.constant';
 import { OrderStatus } from 'src/shared/constants/order.constant';
 import { PaymentProducer } from './paymeny.producer';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class PaymentRepo {
   constructor(
     private readonly prismaService: PrismaService,
@@ -75,7 +77,7 @@ export class PaymentRepo {
         throw new BadRequestException('Cannot get payment id from content');
       }
 
-      const payment = await tx.payment.findUnique({
+      const payment = (await tx.payment.findUnique({
         where: {
           id: paymentId,
         },
@@ -86,7 +88,7 @@ export class PaymentRepo {
             },
           },
         },
-      });
+      })) as any;
 
       if (!payment) {
         throw new BadRequestException(`Cannot find payment with id: ${paymentId}`);

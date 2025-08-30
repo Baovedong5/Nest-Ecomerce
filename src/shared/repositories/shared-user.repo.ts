@@ -3,11 +3,13 @@ import { PrismaService } from '../services/prisma.service';
 import { UserType } from '../models/shared-user.model';
 import { RoleType } from '../models/shared-role.model';
 import { PermissionType } from '../models/shared-permission.model';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 export type WhereUniqueUserType = { id: number } | { email: string };
 
 type UserIncludeRolePermissionType = UserType & { role: RoleType & { permissions: PermissionType[] } };
 @Injectable()
+@SerializeAll()
 export class SharedUserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -17,10 +19,10 @@ export class SharedUserRepository {
         ...where,
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
-  findUniqueInclueRolePermissions(where: WhereUniqueUserType): Promise<UserIncludeRolePermissionType | null> {
+  findUniqueIncludeRolePermissions(where: WhereUniqueUserType): Promise<UserIncludeRolePermissionType | null> {
     return this.prismaService.user.findFirst({
       where: {
         ...where,
@@ -37,16 +39,16 @@ export class SharedUserRepository {
           },
         },
       },
-    });
+    }) as any;
   }
 
-  update(where: { id: number }, data: Partial<UserType>): Promise<UserType | null> {
+  update(where: { id: number }, data: Partial<UserType>): Promise<UserType> {
     return this.prismaService.user.update({
       where: {
         ...where,
         deletedAt: null,
       },
       data,
-    });
+    }) as any;
   }
 }

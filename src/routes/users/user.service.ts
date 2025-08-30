@@ -27,9 +27,13 @@ export class UserService {
   }
 
   async findById(id: number) {
-    const user = await this.sharedUserRepository.findUniqueInclueRolePermissions({
+    const user = await this.sharedUserRepository.findUniqueIncludeRolePermissions({
       id,
     });
+
+    if (!user) {
+      throw NotFoundRecordException;
+    }
 
     return user;
   }

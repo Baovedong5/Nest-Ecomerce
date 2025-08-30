@@ -10,8 +10,10 @@ import {
 } from './review.model';
 import { OrderStatus } from 'src/shared/constants/order.constant';
 import { isUniqueConstraintPrismaError } from 'src/shared/helper';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class ReviewRepo {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -53,7 +55,7 @@ export class ReviewRepo {
       page: pagination.page,
       limit: pagination.limit,
       totalPages: Math.ceil(totalItems / pagination.limit),
-    };
+    } as any;
   }
 
   private async validateOrder({ orderId, userId }: { orderId: number; userId: number }) {
@@ -141,7 +143,7 @@ export class ReviewRepo {
         ...review,
         medias: reviewMedias,
       };
-    });
+    }) as any;
   }
 
   async update({
@@ -201,6 +203,6 @@ export class ReviewRepo {
         ...review,
         medias: reviewMedias,
       };
-    });
+    }) as any;
   }
 }

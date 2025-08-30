@@ -6,8 +6,10 @@ import {
   GetBrandTranslationDetailResType,
   UpdateBrandTranslationType,
 } from './brand-translation.model';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class BrandTranslationRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -17,7 +19,7 @@ export class BrandTranslationRepository {
         id,
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
   create({
@@ -32,7 +34,7 @@ export class BrandTranslationRepository {
         ...data,
         createdById,
       },
-    });
+    }) as any;
   }
 
   update({
@@ -53,25 +55,27 @@ export class BrandTranslationRepository {
         ...data,
         updatedById,
       },
-    });
+    }) as any;
   }
 
   delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean): Promise<BrandTranslationType> {
-    return isHard
-      ? this.prismaService.brandTranslation.delete({
-          where: {
-            id,
-          },
-        })
-      : this.prismaService.brandTranslation.update({
-          where: {
-            id,
-            deletedAt: null,
-          },
-          data: {
-            deletedById,
-            deletedAt: new Date(),
-          },
-        });
+    return (
+      isHard
+        ? this.prismaService.brandTranslation.delete({
+            where: {
+              id,
+            },
+          })
+        : this.prismaService.brandTranslation.update({
+            where: {
+              id,
+              deletedAt: null,
+            },
+            data: {
+              deletedById,
+              deletedAt: new Date(),
+            },
+          })
+    ) as any;
   }
 }

@@ -15,7 +15,7 @@ import {
   SendOTPBodyDTO,
   TwoFatorSetupResDTO,
 } from './auth.dto';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { ZodResponse, ZodSerializerDto } from 'nestjs-zod';
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator';
 import { MessageResDTO } from 'src/shared/dtos/response.dto';
 import { IsPublic } from 'src/shared/decorators/auth.decorator';
@@ -35,7 +35,7 @@ export class AuthController {
   @IsPublic()
   @Post('register')
   // @ResponseMessage('Đăng ký thành công')
-  @ZodSerializerDto(RegisterResDTO)
+  @ZodResponse({ type: RegisterResDTO })
   register(@Body() body: RegisterBodyDTO) {
     return this.authService.register(body);
   }
@@ -43,14 +43,14 @@ export class AuthController {
   @IsPublic()
   @Post('otp')
   // @ResponseMessage('Đăng ký thành công')
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   sendOTP(@Body() body: SendOTPBodyDTO) {
     return this.authService.sendOTP(body);
   }
 
   @IsPublic()
   @Post('login')
-  @ZodSerializerDto(LoginResDTO)
+  @ZodResponse({ type: LoginResDTO })
   // @ResponseMessage('Đăng nhập thành công')
   login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.login({
@@ -64,7 +64,7 @@ export class AuthController {
   @Post('refresh-token')
   // @ResponseMessage('Lấy token mới thành công')
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(RefreshTokenResDTO)
+  @ZodResponse({ type: RefreshTokenResDTO })
   refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.refreshToken({
       refreshToken: body.refreshToken,
@@ -76,14 +76,14 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   // @ResponseMessage('Đăng xuất thành công')
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   logout(@Body() body: LogoutBodyDTO) {
     return this.authService.logout(body.refreshToken);
   }
 
   @Get('google-link')
   @IsPublic()
-  @ZodSerializerDto(GetAuthorizationUrlResDTO)
+  @ZodResponse({ type: GetAuthorizationUrlResDTO })
   getGoogleAuthorizationUrl(@UserAgent() userAgent: string, @Ip() ip: string) {
     return this.googleService.getGoogleAuthorizationUrl({
       userAgent,
@@ -112,19 +112,19 @@ export class AuthController {
 
   @Post('forgot-password')
   @IsPublic()
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
     return this.authService.forgotPassword(body);
   }
 
   @Post('2fa/setup')
-  @ZodSerializerDto(TwoFatorSetupResDTO)
+  @ZodResponse({ type: TwoFatorSetupResDTO })
   setupTwoFactorAuth(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
     return this.authService.setupTwoFactorAuth(userId);
   }
 
   @Post('2fa/disable')
-  @ZodSerializerDto(MessageResDTO)
+  @ZodResponse({ type: MessageResDTO })
   disableTwoFactorAuth(@Body() body: DisableTwoFactorBodyDTO, @ActiveUser('userId') userId: number) {
     return this.authService.disableTwoFactorAuth({
       ...body,

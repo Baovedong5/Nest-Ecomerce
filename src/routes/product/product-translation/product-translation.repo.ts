@@ -6,8 +6,10 @@ import {
   ProductTranslationType,
   UpdateProductTranslationBodyType,
 } from './product-translation.model';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class ProductTranslationRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -17,7 +19,7 @@ export class ProductTranslationRepository {
         id,
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
   create({
@@ -32,7 +34,7 @@ export class ProductTranslationRepository {
         ...data,
         createdById,
       },
-    });
+    }) as any;
   }
 
   update({
@@ -53,25 +55,27 @@ export class ProductTranslationRepository {
         ...data,
         updatedById,
       },
-    });
+    }) as any;
   }
 
   delete({ deletedById, id }: { deletedById: number; id: number }, isHard?: boolean): Promise<ProductTranslationType> {
-    return isHard
-      ? this.prismaService.productTranslation.delete({
-          where: {
-            id,
-          },
-        })
-      : this.prismaService.productTranslation.update({
-          where: {
-            id,
-            deletedAt: null,
-          },
-          data: {
-            deletedAt: new Date(),
-            deletedById,
-          },
-        });
+    return (
+      isHard
+        ? this.prismaService.productTranslation.delete({
+            where: {
+              id,
+            },
+          })
+        : this.prismaService.productTranslation.update({
+            where: {
+              id,
+              deletedAt: null,
+            },
+            data: {
+              deletedAt: new Date(),
+              deletedById,
+            },
+          })
+    ) as any;
   }
 }

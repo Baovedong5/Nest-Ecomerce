@@ -31,7 +31,7 @@ export const RegisterResSchema = UserSchema.omit({
 
 export const VerificationCode = z.object({
   id: z.number(),
-  email: z.string().email(),
+  email: z.email(),
   code: z.string().length(6),
   type: z.enum([
     TypeOfVerifycationCode.REGISTER,
@@ -39,8 +39,8 @@ export const VerificationCode = z.object({
     TypeOfVerifycationCode.LOGIN,
     TypeOfVerifycationCode.DISABLE_2FA,
   ]),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export const SendOTPBodySchema = VerificationCode.pick({
@@ -92,8 +92,8 @@ export const DeviceSchema = z.object({
   userId: z.number(),
   userAgent: z.string(),
   ip: z.string(),
-  lastActive: z.date(),
-  createdAt: z.date(),
+  lastActive: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
   isActive: z.boolean(),
 });
 
@@ -101,8 +101,8 @@ export const RefreshTokenSchema = z.object({
   token: z.string(),
   userId: z.number(),
   deviceId: z.number(),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export const LogoutBodySchema = RefreshTokenBodySchema;
@@ -118,7 +118,7 @@ export const GetAuthorizationUrlResSchema = z.object({
 
 export const ForgotPasswordBodySchema = z
   .object({
-    email: z.string().email(),
+    email: z.email(),
     code: z.string().length(6),
     newPassword: z.string().min(6).max(100),
     confirmNewPassword: z.string().min(6).max(100),

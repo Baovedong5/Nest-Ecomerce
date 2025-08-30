@@ -79,8 +79,8 @@ export class AccessTokenGuard implements CanActivate {
     let cachedRole = await this.cacheManager.get<CacheRole>(cacheKey);
 
     // 2. Nếu không có trong cache thì truy vấn từ database
-    if (cachedRole === null) {
-      const role = await this.prismaService.role
+    if (!cachedRole) {
+      const role = (await this.prismaService.role
         .findUniqueOrThrow({
           where: {
             id: roleId,
@@ -97,7 +97,7 @@ export class AccessTokenGuard implements CanActivate {
         })
         .catch(() => {
           throw new ForbiddenException();
-        });
+        })) as unknown as RolePermissionsType;
 
       const permissionObject = keyBy(
         role.permissions,

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { CreateLanguageBodyType, LanguageType, UpdateLanguageBodyType } from './language.model';
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator';
 
 @Injectable()
+@SerializeAll()
 export class LanguageRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -11,7 +13,7 @@ export class LanguageRepository {
       where: {
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
   findById(id: string): Promise<LanguageType | null> {
@@ -20,7 +22,7 @@ export class LanguageRepository {
         id,
         deletedAt: null,
       },
-    });
+    }) as any;
   }
 
   createLanguage({ createdById, data }: { createdById: number; data: CreateLanguageBodyType }): Promise<LanguageType> {
@@ -29,7 +31,7 @@ export class LanguageRepository {
         ...data,
         createdById,
       },
-    });
+    }) as any;
   }
 
   updateLanguage({
@@ -50,24 +52,26 @@ export class LanguageRepository {
         ...data,
         updatedById,
       },
-    });
+    }) as any;
   }
 
   deleteLanguage(id: string, isHard?: boolean): Promise<LanguageType> {
-    return isHard
-      ? this.prismaService.language.delete({
-          where: {
-            id,
-          },
-        })
-      : this.prismaService.language.update({
-          where: {
-            id,
-            deletedAt: null,
-          },
-          data: {
-            deletedAt: new Date(),
-          },
-        });
+    return (
+      isHard
+        ? this.prismaService.language.delete({
+            where: {
+              id,
+            },
+          })
+        : this.prismaService.language.update({
+            where: {
+              id,
+              deletedAt: null,
+            },
+            data: {
+              deletedAt: new Date(),
+            },
+          })
+    ) as any;
   }
 }
